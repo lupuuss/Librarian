@@ -36,14 +36,16 @@ namespace Librarian.model.data
             } 
         }
 
-        public Lending(Customer customer, BookCopy bookCopy, Guid guid)
+        public Lending(Customer customer, BookCopy bookCopy, DateTime lendingDate, Guid guid)
         {
             Customer = customer;
             BookCopy = bookCopy;
             Guid = guid;
+            LendingDate = lendingDate;
+            
         }
 
-        public Lending(Customer customer, BookCopy bookCopy) : this(customer, bookCopy, Guid.NewGuid()) { }
+        public Lending(Customer customer, BookCopy bookCopy, DateTime lendingDate) : this(customer, bookCopy, lendingDate, Guid.NewGuid()) { }
 
         bool IsReturned()
         {
