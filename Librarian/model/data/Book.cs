@@ -30,15 +30,18 @@ namespace Librarian
 
         public Isbn Isbn
         { get; private set; }
+
         public string Name
         { get; private set; }
+
         public string Author
         { get; private set; }
 
-        public Book(string name, Isbn isbn)
+        public Book(Isbn isbn, string name, string author)
         {
-            Name = name;
             Isbn = isbn;
+            Name = name;
+            Author = author;
         }
     }
 }
