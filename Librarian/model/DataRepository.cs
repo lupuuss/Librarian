@@ -1,13 +1,21 @@
 ﻿using Librarian.model.data;
+using Librarian.model.filler;
 using System;
 using System.Collections.Generic;
-
+using System.Data;
 
 namespace Librarian.model
 {
     class DataRepository : IDataRepository
     {
         private DataContext _dataContext;
+
+        DataRepository(IDataFiller dataFiller)
+        {
+            _dataContext = new DataContext();
+            dataFiller.Fill(_dataContext); 
+        }
+
         public void AddBook(Book position)
         {
             _dataContext.books.Add(position.Isbn, position);
