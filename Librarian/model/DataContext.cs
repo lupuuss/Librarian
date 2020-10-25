@@ -1,23 +1,23 @@
 ﻿using Librarian.model.data;
-using System;
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace Librarian.model
 {
-    class DataContext
+    internal class DataContext
     {
 
-        public List<Customer> customers
+        internal List<Customer> customers
         { get; private set; }
 
-        public Dictionary<Isbn, Book> books
+        internal Dictionary<Isbn, Book> books
         { get; private set; }
 
-        public ObservableCollection<Lending> lendings
+        internal ObservableCollection<Lending> lendings
         { get; private set; }
 
-        public ObservableCollection<BookCopy> bookCopies
+        internal ObservableCollection<BookCopy> bookCopies
         { get; private set; }
 
     }
