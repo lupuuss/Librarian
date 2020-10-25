@@ -2,7 +2,7 @@
 
 namespace Librarian.model.data
 {
-    public class Customer
+    public class Customer : IEquatable<Customer>
     {
         public Guid Guid
         { get; private set; }
@@ -21,5 +21,10 @@ namespace Librarian.model.data
         }
 
         public Customer(string name, string lastName) : this(name, lastName, Guid.NewGuid()) { }
+
+        public bool Equals(Customer other)
+        {
+            return Guid == other.Guid; 
+        }
     }
 }
