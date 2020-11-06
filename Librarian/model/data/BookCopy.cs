@@ -35,9 +35,6 @@ namespace Librarian.model.data
         public States State
         { get; set; }
 
-        public Guid Guid
-        { get; private set; }
-
         public Book Book
         { get; private set; }
 
@@ -46,14 +43,11 @@ namespace Librarian.model.data
 
         public double Price => BasePrice * (double) State / 100.0;
 
-        public BookCopy(Book book, States state, double basePrice, Guid guid)
+        public BookCopy(Book book, States state, double basePrice)
         {
             Book = book;
             State = state;
             BasePrice = basePrice;
-            Guid = guid;
         }
-
-        public BookCopy(Book book, States state, double basePrice) : this(book, state, basePrice, Guid.NewGuid()) { }
     }
 }

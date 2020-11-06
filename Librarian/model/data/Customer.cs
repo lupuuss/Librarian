@@ -2,29 +2,27 @@
 
 namespace Librarian.model.data
 {
-    public class Customer : IEquatable<Customer>
+    public class Customer
     {
-        public Guid Guid
-        { get; private set; }
-
         public string Name
         { get; private set; }
 
         public string LastName
         { get; private set; }
 
-        public Customer(string name, string lastName, Guid guid)
+        public Address Address
+        { get; private set; }
+
+        public Customer(string name, string lastName, Address address)
         {
             Name = name;
             LastName = lastName;
-            Guid = guid;
+            Address = address;
         }
 
-        public Customer(string name, string lastName) : this(name, lastName, Guid.NewGuid()) { }
-
-        public bool Equals(Customer other)
+        public override string ToString()
         {
-            return Guid == other.Guid; 
+            return String.Format("{{ Name: {0}; LastName: {1}; Address: {2}; }}", Name, LastName, Address.ToString());
         }
     }
 }
