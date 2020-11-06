@@ -1,5 +1,6 @@
 ﻿using Librarian.model.data;
 using Librarian.model.data.events;
+using Librarian.model.data.exceptions;
 using Librarian.model.filler;
 using System.Collections.Generic;
 using System.Linq;
