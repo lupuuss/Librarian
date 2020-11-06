@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Librarian.model.data.exceptions
+namespace Librarian.Model.Data.Exceptions
 {
     public class EventException : Exception
     {

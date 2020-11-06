@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Librarian.model.data
+﻿namespace Librarian.Model.Data
 {
     public class Customer
     {
@@ -22,7 +20,7 @@ namespace Librarian.model.data
 
         public override string ToString()
         {
-            return String.Format("{{ Name: {0}; LastName: {1}; Address: {2}; }}", Name, LastName, Address.ToString());
+            return string.Format("{{ Name: {0}; LastName: {1}; Address: {2}; }}", Name, LastName, Address.ToString());
         }
     }
 }

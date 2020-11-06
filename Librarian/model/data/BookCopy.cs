@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Librarian.model.data
+﻿namespace Librarian.Model.Data
 {
     public class BookCopy
     {
@@ -46,9 +44,9 @@ namespace Librarian.model.data
         { get; private set; }
 
         public bool IsLent
-        { get;  set; } = false; 
+        { get; set; } = false;
 
-        public double Price => BasePrice * (double) State / 100.0;
+        public double Price => BasePrice * (double)State / 100.0;
 
         public BookCopy(Book book, States state, double basePrice)
         {

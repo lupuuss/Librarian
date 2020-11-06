@@ -1,11 +1,11 @@
-﻿using Librarian.model.data;
-using Librarian.model.data.events;
-using Librarian.model.data.exceptions;
-using Librarian.model.filler;
+﻿using Librarian.Model.Data;
+using Librarian.Model.Data.Events;
+using Librarian.Model.Data.Exceptions;
+using Librarian.Model.Filler;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Librarian.model
+namespace Librarian.Model
 {
     public class DataRepository : IDataRepository
     {
@@ -14,7 +14,7 @@ namespace Librarian.model
         public DataRepository(IDataFiller dataFiller)
         {
             _dataContext = new DataContext();
-            dataFiller.Fill(_dataContext); 
+            dataFiller.Fill(_dataContext);
         }
 
         public void AddBook(Book position)
@@ -44,7 +44,7 @@ namespace Librarian.model
 
         public void AddBookCopy(BookCopy bookCopy)
         {
-            _dataContext.bookCopies.Add(bookCopy); 
+            _dataContext.bookCopies.Add(bookCopy);
         }
 
         public BookCopy GetBookCopy(int id)
@@ -53,7 +53,7 @@ namespace Librarian.model
         }
         public void UpdateBookCopy(int id, BookCopy bookCopy)
         {
-            _dataContext.bookCopies[id] = bookCopy; 
+            _dataContext.bookCopies[id] = bookCopy;
         }
 
         public void DeleteBookCopy(BookCopy bookCopy)
@@ -103,7 +103,7 @@ namespace Librarian.model
                 case ReturnBookEvent returnBookEvent:
                     IsValid(returnBookEvent);
 
-                    returnBookEvent.Copy.IsLent = false; 
+                    returnBookEvent.Copy.IsLent = false;
 
                     if (returnBookEvent.Cause == PaymentCause.DamagedBook)
                     {
@@ -143,7 +143,7 @@ namespace Librarian.model
             {
                 throw new InvalidEventException("Cannot return book which is not lent");
             }
-            
+
 
             var lastCorespondingLend = _dataContext.events
                 .AsEnumerable()
@@ -156,7 +156,8 @@ namespace Librarian.model
             if (lastCorespondingLend == null)
             {
                 throw new InvalidEventException("No coresponding lend event!");
-            } else if (lastCorespondingLend.Date >= returnBookEvent.Date)
+            }
+            else if (lastCorespondingLend.Date >= returnBookEvent.Date)
             {
                 throw new InvalidEventException("Return date should after lend date!");
             }
@@ -196,7 +197,7 @@ namespace Librarian.model
 
         public IEnumerable<Event> GetAllEvents()
         {
-            return _dataContext.events; 
+            return _dataContext.events;
         }
     }
 }

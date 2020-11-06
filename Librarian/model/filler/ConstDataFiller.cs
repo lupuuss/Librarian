@@ -1,11 +1,9 @@
-﻿using Librarian.model.data;
-using Librarian.model.data.events;
+﻿using Librarian.Model.Data;
+using Librarian.Model.Data.Events;
 using System;
 using System.Collections.Generic;
-using System.Net.Http.Headers;
-using System.Text;
 
-namespace Librarian.model.filler
+namespace Librarian.Model.Filler
 {
     public class ConstDataFiller : IDataFiller
     {
@@ -51,10 +49,10 @@ namespace Librarian.model.filler
 
             context.events.Add(
                 new ReturnBookEvent(
-                    context.bookCopies[1], 
-                    context.customers[1], 
+                    context.bookCopies[1],
+                    context.customers[1],
                     DateTime.Parse("28/5/2019 19:27:00"),
-                    context.bookCopies[1].Price, 
+                    context.bookCopies[1].Price,
                     PaymentCause.DamagedBook
                     )
             );

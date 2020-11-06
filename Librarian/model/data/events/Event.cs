@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Librarian.model.data.events
+namespace Librarian.Model.Data.Events
 {
     public abstract class Event
     {

@@ -1,10 +1,9 @@
-﻿using Librarian.model.data;
-using Librarian.model.data.events;
-using System;
+﻿using Librarian.Model.Data;
+using Librarian.Model.Data.Events;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace Librarian.model
+namespace Librarian.Model
 {
     public class DataContext
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Librarian.model.data.events
+namespace Librarian.Model.Data.Events
 {
     public enum PaymentCause
     {
@@ -28,8 +28,8 @@ namespace Librarian.model.data.events
         { get; private set; } = PaymentCause.None;
 
         public ReturnBookEvent(
-            BookCopy copy, 
-            Customer customer, 
+            BookCopy copy,
+            Customer customer,
             DateTime date
             ) : base(copy, customer, date)
         {

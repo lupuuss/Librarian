@@ -1,19 +1,17 @@
-﻿using Librarian.model.data;
-using Librarian.model.data.events;
-using System;
+﻿using Librarian.Model.Data;
+using Librarian.Model.Data.Events;
 using System.Collections.Generic;
-using System.Text;
 
-namespace Librarian.model
+namespace Librarian.Model
 {
-    public interface IDataRepository 
+    public interface IDataRepository
     {
         void AddBook(Book position);
         Book GetBook(Isbn isbn);
         void UpdateBook(Isbn isbn, Book position);
         void DeleteBook(Book position);
         IEnumerable<Book> GetAllBooks();
-       
+
 
         void AddCustomer(Customer customer);
         Customer GetCustomer(int id);
@@ -21,13 +19,13 @@ namespace Librarian.model
         void UpdateCustomer(int id, Customer customer);
         IEnumerable<Customer> GetAllCustomers();
 
-        void AddBookCopy(BookCopy bookCopy); 
+        void AddBookCopy(BookCopy bookCopy);
         BookCopy GetBookCopy(int id);
         void UpdateBookCopy(int id, BookCopy bookCopy);
         void DeleteBookCopy(BookCopy bookCopy);
         IEnumerable<BookCopy> GetAllBookCopies();
         void AddEvent(Event eve);
-        IEnumerable<Event> GetAllEvents(); 
+        IEnumerable<Event> GetAllEvents();
 
     }
 }

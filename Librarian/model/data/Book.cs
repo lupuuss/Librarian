@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 
-namespace Librarian
+namespace Librarian.Model.Data
 {
     public class Isbn : IEquatable<Isbn>
     {

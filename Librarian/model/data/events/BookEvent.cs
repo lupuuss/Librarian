@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Librarian.model.data.events
+namespace Librarian.Model.Data.Events
 {
     public abstract class BookEvent : Event
     {

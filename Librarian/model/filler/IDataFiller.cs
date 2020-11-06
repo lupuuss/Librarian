@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Librarian.model.filler
+﻿namespace Librarian.Model.Filler
 {
     public interface IDataFiller
     {

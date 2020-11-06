@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Librarian.model.data
+﻿namespace Librarian.Model.Data
 {
     public class Address
     {
@@ -21,7 +17,7 @@ namespace Librarian.model.data
 
         public override string ToString()
         {
-            return String.Format("{{ Street: {0}, PostalCode: {1}, City: {2}, Country: {3} }}", Street, PostalCode, City, Country);
+            return string.Format("{{ Street: {0}, PostalCode: {1}, City: {2}, Country: {3} }}", Street, PostalCode, City, Country);
         }
     }
 }
