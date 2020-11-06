@@ -19,22 +19,44 @@ namespace Librarian.Model
 
         public void AddBook(Book position)
         {
+            if (_dataContext.books.ContainsKey(position.Isbn))
+            {
+                throw new DataAlreadyExistsException();
+            }
+
             _dataContext.books.Add(position.Isbn, position);
         }
 
         public Book GetBook(Isbn isbn)
         {
+            CheckBookIsbn(isbn);
+
             return _dataContext.books[isbn];
         }
 
         public void UpdateBook(Isbn isbn, Book position)
         {
+            CheckBookIsbn(isbn);
             _dataContext.books[isbn] = position;
         }
 
-        public void DeleteBook(Book position)
+        private void CheckBookIsbn(Isbn isbn)
         {
-            _dataContext.books.Remove(position.Isbn);
+            if (!_dataContext.books.ContainsKey(isbn))
+            {
+                throw new DataNotExistsException();
+            }
+        }
+
+        public void DeleteBook(Isbn isbn)
+        {
+         
+            var result = _dataContext.books.Remove(isbn);
+
+            if (!result)
+            {
+                throw new DataNotRemovedException();
+            }
         }
 
         public IEnumerable<Book> GetAllBooks()
@@ -44,21 +66,58 @@ namespace Librarian.Model
 
         public void AddBookCopy(BookCopy bookCopy)
         {
+            if (_dataContext.bookCopies.Contains(bookCopy))
+            {
+                throw new DataAlreadyExistsException();
+            }
+
+            CheckBookCopyReference(bookCopy);
+
             _dataContext.bookCopies.Add(bookCopy);
         }
 
         public BookCopy GetBookCopy(int id)
         {
+
+            CheckBookCopyId(id);
             return _dataContext.bookCopies[id];
         }
+        
         public void UpdateBookCopy(int id, BookCopy bookCopy)
         {
+            CheckBookCopyId(id);
+
+            CheckBookCopyReference(bookCopy);
+
             _dataContext.bookCopies[id] = bookCopy;
+        }
+        
+        private void CheckBookCopyReference(BookCopy bookCopy)
+        {
+            if (!_dataContext.books.ContainsKey(bookCopy.Book.Isbn))
+            {
+                throw new InvalidDataException("Book copy refers to book that is not in repository!");
+            }
+        }
+
+        private void CheckBookCopyId(int id)
+        {
+            if (id > _dataContext.bookCopies.Count())
+            {
+                throw new DataNotExistsException();
+            }
         }
 
         public void DeleteBookCopy(BookCopy bookCopy)
         {
-            _dataContext.bookCopies.Remove(bookCopy);
+
+            var result = _dataContext.bookCopies.Remove(bookCopy);
+
+            if (!result)
+            {
+                throw new DataNotRemovedException();
+            }
+
         }
 
         public IEnumerable<BookCopy> GetAllBookCopies()
@@ -68,20 +127,45 @@ namespace Librarian.Model
 
         public void AddCustomer(Customer customer)
         {
+
+            if (_dataContext.customers.Contains(customer))
+            {
+                throw new DataAlreadyExistsException();
+            }
+
             _dataContext.customers.Add(customer);
         }
+        
         public Customer GetCustomer(int id)
         {
+
+            CheckCustomerId(id);
             return _dataContext.customers[id];
         }
 
         public void UpdateCustomer(int id, Customer customer)
         {
+
+            CheckCustomerId(id);
             _dataContext.customers[id] = customer;
         }
+
+        private void CheckCustomerId(int id)
+        {
+            if (id > _dataContext.customers.Count())
+            {
+                throw new DataNotExistsException();
+            }
+        }
+        
         public void DeleteCustomer(Customer customer)
         {
-            _dataContext.customers.Remove(customer);
+            var result = _dataContext.customers.Remove(customer);
+
+            if (!result)
+            {
+                throw new DataNotRemovedException();
+            }
         }
 
         public IEnumerable<Customer> GetAllCustomers()
@@ -120,6 +204,7 @@ namespace Librarian.Model
 
             _dataContext.events.Add(eve);
         }
+        
         private void IsValid(LendBookEvent lendBookEvent)
         {
             CheckBookEvent(lendBookEvent);
