@@ -1,16 +1,16 @@
 ﻿using Librarian.model.data;
+using Librarian.model.data.events;
 using Librarian.model.filler;
-using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Linq;
 
 namespace Librarian.model
 {
-    class DataRepository : IDataRepository
+    public class DataRepository : IDataRepository
     {
         private DataContext _dataContext;
 
-        DataRepository(IDataFiller dataFiller)
+        public DataRepository(IDataFiller dataFiller)
         {
             _dataContext = new DataContext();
             dataFiller.Fill(_dataContext); 
@@ -88,7 +88,114 @@ namespace Librarian.model
             return _dataContext.customers;
         }
 
+        public void AddEvent(Event eve)
+        {
 
+            switch (eve)
+            {
+                case LendBookEvent lendBookEvent:
+                    IsValid(lendBookEvent);
 
+                    lendBookEvent.Copy.IsLent = true;
+
+                    break;
+                case ReturnBookEvent returnBookEvent:
+                    IsValid(returnBookEvent);
+
+                    returnBookEvent.Copy.IsLent = false; 
+
+                    if (returnBookEvent.Cause == PaymentCause.DamagedBook)
+                    {
+                        returnBookEvent.Copy.State = BookCopy.States.Damaged;
+                    }
+
+                    break;
+                case PaymentEvent payment:
+                    IsValid(payment);
+                    break;
+                default:
+                    throw new UnrecognizedEventException();
+            }
+
+            _dataContext.events.Add(eve);
+        }
+        private void IsValid(LendBookEvent lendBookEvent)
+        {
+            CheckBookEvent(lendBookEvent);
+
+            if (lendBookEvent.Copy.State == BookCopy.States.Damaged ||
+                lendBookEvent.Copy.State == BookCopy.States.NeedReplacement)
+            {
+                throw new InvalidEventException("Book is in a bad state - cannot be lent!");
+            }
+            if (lendBookEvent.Copy.IsLent)
+            {
+                throw new InvalidEventException("Book is already lent.");
+            }
+        }
+
+        private void IsValid(ReturnBookEvent returnBookEvent)
+        {
+            CheckBookEvent(returnBookEvent);
+
+            if (!returnBookEvent.Copy.IsLent)
+            {
+                throw new InvalidEventException("Cannot return book which is not lent");
+            }
+            
+
+            var lastCorespondingLend = _dataContext.events
+                .AsEnumerable()
+                .Where(eve => eve is LendBookEvent)
+                .Cast<LendBookEvent>()
+                .Where(eve => eve.Copy == returnBookEvent.Copy && eve.Customer == returnBookEvent.Customer)
+                .OrderByDescending(eve => eve.Date)
+                .FirstOrDefault();
+
+            if (lastCorespondingLend == null)
+            {
+                throw new InvalidEventException("No coresponding lend event!");
+            } else if (lastCorespondingLend.Date >= returnBookEvent.Date)
+            {
+                throw new InvalidEventException("Return date should after lend date!");
+            }
+        }
+
+        private void IsValid(PaymentEvent paymentEvent)
+        {
+            CheckCustomerExistance(paymentEvent.Customer);
+
+            if (paymentEvent.Amount > 0)
+            {
+                throw new InvalidEventException("Payment amount must be positive number!");
+            }
+        }
+
+        private void CheckBookEvent(BookEvent bookEvent)
+        {
+            CheckCustomerExistance(bookEvent.Customer);
+            CheckBookCopyExistance(bookEvent.Copy);
+        }
+
+        private void CheckCustomerExistance(Customer customer)
+        {
+            if (!_dataContext.customers.Contains(customer))
+            {
+                throw new InvalidEventException("Customer does not exist.");
+            }
+        }
+
+        private void CheckBookCopyExistance(BookCopy bookCopy)
+        {
+            if (!_dataContext.bookCopies.Contains(bookCopy))
+            {
+                throw new InvalidEventException("Book copy does not exist.");
+            }
+        }
+
+        public IEnumerable<Event> GetAllEvents()
+        {
+            return _dataContext.events; 
+        }
     }
 }

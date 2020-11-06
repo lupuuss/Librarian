@@ -1,11 +1,12 @@
 ﻿using Librarian.model.data;
+using Librarian.model.data.events;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Librarian.model
 {
-    interface IDataRepository 
+    public interface IDataRepository 
     {
         void AddBook(Book position);
         Book GetBook(Isbn isbn);
@@ -25,12 +26,8 @@ namespace Librarian.model
         void UpdateBookCopy(int id, BookCopy bookCopy);
         void DeleteBookCopy(BookCopy bookCopy);
         IEnumerable<BookCopy> GetAllBookCopies();
-        
-       
-
-        
-
-
+        void AddEvent(Event eve);
+        IEnumerable<Event> GetAllEvents(); 
 
     }
 }
