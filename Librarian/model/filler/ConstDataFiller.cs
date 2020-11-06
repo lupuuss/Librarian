@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Librarian.model.filler
 {
-    class ConstDataFiller : IDataFiller
+    public class ConstDataFiller : IDataFiller
     {
         public void Fill(DataContext context)
         {
@@ -38,22 +38,22 @@ namespace Librarian.model.filler
 
 
             context.events.Add(
-                new LendBookEvent(context.bookCopies[0], context.customers[0], DateTime.Parse("05 / 28 / 2019 18:32:00"))
+                new LendBookEvent(context.bookCopies[0], context.customers[0], DateTime.Parse("28/5/2019 18:32:00"))
                 );
 
             context.events.Add(
-                new ReturnBookEvent(context.bookCopies[0], context.customers[0], DateTime.Parse("05 / 29 / 2019 17:10:00"))
+                new ReturnBookEvent(context.bookCopies[0], context.customers[0], DateTime.Parse("29/5/2019 17:10:00"))
             );
 
             context.events.Add(
-                new LendBookEvent(context.bookCopies[1], context.customers[1], DateTime.Parse("05 / 28 / 2019 19:27:00"))
+                new LendBookEvent(context.bookCopies[1], context.customers[1], DateTime.Parse("28/5/2019 19:27:00"))
                 );
 
             context.events.Add(
                 new ReturnBookEvent(
                     context.bookCopies[1], 
                     context.customers[1], 
-                    DateTime.Parse("05 / 28 / 2019 19:27:00"),
+                    DateTime.Parse("28/5/2019 19:27:00"),
                     context.bookCopies[1].Price, 
                     PaymentCause.DamagedBook
                     )
@@ -61,7 +61,7 @@ namespace Librarian.model.filler
 
             context.events.Add(
                 new PaymentEvent(
-                    DateTime.Parse("05 / 28 / 2019 19:30:00"),
+                    DateTime.Parse("28/5/2019 19:30:00"),
                     context.customers[1],
                     context.bookCopies[1].Price
                 )
