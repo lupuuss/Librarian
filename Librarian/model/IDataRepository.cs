@@ -9,9 +9,8 @@ namespace Librarian.Model
         void AddBook(Book position);
         Book GetBook(Isbn isbn);
         void UpdateBook(Isbn isbn, Book position);
-        void DeleteBook(Book position);
+        void DeleteBook(Isbn isbn);
         IEnumerable<Book> GetAllBooks();
-
 
         void AddCustomer(Customer customer);
         Customer GetCustomer(int id);

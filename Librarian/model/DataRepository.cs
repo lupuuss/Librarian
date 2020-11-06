@@ -86,7 +86,6 @@ namespace Librarian.Model
         public void UpdateBookCopy(int id, BookCopy bookCopy)
         {
             CheckBookCopyId(id);
-
             CheckBookCopyReference(bookCopy);
 
             _dataContext.bookCopies[id] = bookCopy;
