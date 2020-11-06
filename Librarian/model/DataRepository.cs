@@ -21,9 +21,14 @@ namespace Librarian.model
             _dataContext.books.Add(position.Isbn, position);
         }
 
-        public void AddCustomer(Customer customer)
+        public Book GetBook(Isbn isbn)
         {
-            _dataContext.customers.Add(customer);
+            return _dataContext.books[isbn];
+        }
+
+        public void UpdateBook(Isbn isbn, Book position)
+        {
+            _dataContext.books[isbn] = position;
         }
 
         public void DeleteBook(Book position)
@@ -31,42 +36,59 @@ namespace Librarian.model
             _dataContext.books.Remove(position.Isbn);
         }
 
+        public IEnumerable<Book> GetAllBooks()
+        {
+            return _dataContext.books.Values;
+        }
+
+        public void AddBookCopy(BookCopy bookCopy)
+        {
+            _dataContext.bookCopies.Add(bookCopy); 
+        }
+
+        public BookCopy GetBookCopy(int id)
+        {
+            return _dataContext.bookCopies[id];
+        }
+        public void UpdateBookCopy(int id, BookCopy bookCopy)
+        {
+            _dataContext.bookCopies[id] = bookCopy; 
+        }
+
+        public void DeleteBookCopy(BookCopy bookCopy)
+        {
+            _dataContext.bookCopies.Remove(bookCopy);
+        }
+
+        public IEnumerable<BookCopy> GetAllBookCopies()
+        {
+            return _dataContext.bookCopies;
+        }
+
+        public void AddCustomer(Customer customer)
+        {
+            _dataContext.customers.Add(customer);
+        }
+        public Customer GetCustomer(int id)
+        {
+            return _dataContext.customers[id];
+        }
+
+        public void UpdateCustomer(int id, Customer customer)
+        {
+            _dataContext.customers[id] = customer;
+        }
         public void DeleteCustomer(Customer customer)
         {
             _dataContext.customers.Remove(customer);
         }
 
-        public IEnumerable<Book> GetAllBooks()
-        {
-            return _dataContext.books.Values; 
-        }
-
         public IEnumerable<Customer> GetAllCustomers()
         {
-            return _dataContext.customers; 
-        }
-
-        public Book GetBook(Isbn isbn)
-        {
-            return _dataContext.books[isbn];
-        }
-
-        public Customer GetCustomer(Guid guid)
-        {
-            return _dataContext.customers.Find(customer => customer.Guid.Equals(guid)); 
+            return _dataContext.customers;
         }
 
 
-        public void UpdateBook(Isbn isbn, Book position)
-        {
-            throw new NotImplementedException();
-        }
 
-        public void UpdateCustomer(Guid guid, Customer customer)
-        {
-            throw new NotImplementedException();
-        }
-
-      
     }
 }

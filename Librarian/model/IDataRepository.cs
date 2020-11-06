@@ -5,18 +5,30 @@ using System.Text;
 
 namespace Librarian.model
 {
-    interface IDataRepository
+    interface IDataRepository 
     {
         void AddBook(Book position);
         Book GetBook(Isbn isbn);
-        IEnumerable<Book> GetAllBooks();
         void UpdateBook(Isbn isbn, Book position);
         void DeleteBook(Book position);
+        IEnumerable<Book> GetAllBooks();
+       
+
         void AddCustomer(Customer customer);
-        Customer GetCustomer(Guid guid);
+        Customer GetCustomer(int id);
+        void DeleteCustomer(Customer customer);
+        void UpdateCustomer(int id, Customer customer);
         IEnumerable<Customer> GetAllCustomers();
-        void UpdateCustomer(Guid guid, Customer customer);
-        void DeleteCustomer(Customer customer); 
+
+        void AddBookCopy(BookCopy bookCopy); 
+        BookCopy GetBookCopy(int id);
+        void UpdateBookCopy(int id, BookCopy bookCopy);
+        void DeleteBookCopy(BookCopy bookCopy);
+        IEnumerable<BookCopy> GetAllBookCopies();
+        
+       
+
+        
 
 
 
