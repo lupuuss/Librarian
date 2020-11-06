@@ -1,5 +1,6 @@
 ﻿using Librarian.model.data;
-
+using Librarian.model.data.events;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -14,7 +15,7 @@ namespace Librarian.model
         internal Dictionary<Isbn, Book> books
         { get; private set; }
 
-        internal ObservableCollection<Lending> lendings
+        internal ObservableCollection<Event> events
         { get; private set; }
 
         internal ObservableCollection<BookCopy> bookCopies
