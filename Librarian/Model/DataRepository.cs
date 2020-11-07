@@ -34,12 +34,6 @@ namespace Librarian.Model
             return _dataContext.books[isbn];
         }
 
-        public void UpdateBook(Isbn isbn, Book position)
-        {
-            CheckBookIsbn(isbn);
-            _dataContext.books[isbn] = position;
-        }
-
         private void CheckBookIsbn(Isbn isbn)
         {
             if (!_dataContext.books.ContainsKey(isbn))
@@ -83,13 +77,6 @@ namespace Librarian.Model
             return _dataContext.bookCopies[id];
         }
         
-        public void UpdateBookCopy(int id, BookCopy bookCopy)
-        {
-            CheckBookCopyId(id);
-            CheckBookCopyReference(bookCopy);
-
-            _dataContext.bookCopies[id] = bookCopy;
-        }
         
         private void CheckBookCopyReference(BookCopy bookCopy)
         {
@@ -140,13 +127,6 @@ namespace Librarian.Model
 
             CheckCustomerId(id);
             return _dataContext.customers[id];
-        }
-
-        public void UpdateCustomer(int id, Customer customer)
-        {
-
-            CheckCustomerId(id);
-            _dataContext.customers[id] = customer;
         }
 
         private void CheckCustomerId(int id)
