@@ -2,6 +2,7 @@
 using Librarian.Model.Data.Events;
 using Librarian.Model.Data.Exceptions;
 using Librarian.Model.Filler;
+using Librarian;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,8 +10,7 @@ namespace Librarian.Model
 {
     public class DataRepository : IDataRepository
     {
-        private DataContext _dataContext;
-
+        private readonly DataContext _dataContext;
         public DataRepository(IDataFiller dataFiller)
         {
             _dataContext = new DataContext();
@@ -42,9 +42,24 @@ namespace Librarian.Model
             }
         }
 
-        public void DeleteBook(Isbn isbn)
+        public void DeleteBook(Isbn isbn, bool removeDependencies = false)
         {
-         
+            var bookCopyDependencies = _dataContext.bookCopies.Where(c => c.Book.Isbn == isbn);
+
+            if (!removeDependencies && bookCopyDependencies.Count() > 0)
+            {
+
+                throw new UnsafeDataRemoveException(
+                    bookCopyDependencies.ToString()
+                    + "Warning! BookCopies may also referer to events!"
+                    );
+            }
+
+            foreach (var dependency in bookCopyDependencies)
+            {
+                DeleteBookCopy(dependency, true);
+            }
+
             var result = _dataContext.books.Remove(isbn);
 
             if (!result)
@@ -94,8 +109,22 @@ namespace Librarian.Model
             }
         }
 
-        public void DeleteBookCopy(BookCopy bookCopy)
+        public void DeleteBookCopy(BookCopy bookCopy, bool removeDependencies = false)
         {
+
+            var dependencies = _dataContext.events.Where(e => e is BookEvent)
+                .Cast<BookEvent>()
+                .Where(e => e.Copy == bookCopy);
+
+            if (!removeDependencies && dependencies.Count() > 0)
+            {
+                throw new UnsafeDataRemoveException(dependencies.ToString());
+            }
+
+            if (bookCopy.IsLent)
+            {
+                throw new BookCopyLentException();
+            }
 
             var result = _dataContext.bookCopies.Remove(bookCopy);
 
@@ -104,6 +133,7 @@ namespace Librarian.Model
                 throw new DataNotRemovedException();
             }
 
+            _dataContext.events.RemoveAll(dependencies);
         }
 
         public IEnumerable<BookCopy> GetAllBookCopies()
@@ -137,15 +167,66 @@ namespace Librarian.Model
             }
         }
         
-        public void DeleteCustomer(Customer customer)
+        public void DeleteCustomer(Customer customer, bool removeDependencies = false)
         {
+
+            var dependencies = _dataContext.events.Where(e => e.Customer == customer);
+
+            if (!removeDependencies && dependencies.Count() > 0)
+            {
+                throw new UnsafeDataRemoveException(dependencies.ToString());
+            }
+
+            CheckCustomerReturnedBooks(customer, dependencies);
+            CheckCustomerPaiedDepts(customer, dependencies);
+
             var result = _dataContext.customers.Remove(customer);
 
             if (!result)
             {
                 throw new DataNotRemovedException();
             }
+
+            _dataContext.events.RemoveAll(dependencies);
         }
+
+        private void CheckCustomerReturnedBooks(Customer customer, IEnumerable<Event> dependencies)
+        {
+
+            var lendsCount = dependencies
+                .Where(e => e is LendBookEvent)
+                .Cast<LendBookEvent>()
+                .Count();
+            var returnsCount = dependencies
+                .Where(e => e is ReturnBookEvent)
+                .Cast<LendBookEvent>()
+                .Count();
+
+            if (lendsCount - returnsCount != 0)
+            {
+                throw new CustomerHasArreasException("Customer haven't returned book and cannot be removed!");
+            }
+        }
+
+        private void CheckCustomerPaiedDepts(Customer customer, IEnumerable<Event> dependencies)
+        {
+            var deptPrice = dependencies
+                .Where(e => e is ReturnBookEvent)
+                .Cast<ReturnBookEvent>()
+                .Sum(e => e.RequiredPayment);
+
+            var payments = dependencies
+                .Where(e => e is PaymentEvent)
+                .Cast<PaymentEvent>()
+                .Sum(e => e.Amount);
+
+            if (deptPrice - payments > 0)
+            {
+                throw new CustomerHasArreasException("Customer haven't paid his depts!" +
+                    " Required payment: " + (deptPrice - payments).ToString());
+            }
+        }
+
 
         public IEnumerable<Customer> GetAllCustomers()
         {
