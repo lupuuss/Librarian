@@ -10,7 +10,8 @@ namespace LibrarianTests
         [TestMethod]
         public void TestMethod1()
         {
-            Assert.Fail();
+            
+            Assert.Inconclusive();
         }
     }
 }
