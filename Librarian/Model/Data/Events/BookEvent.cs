@@ -6,12 +6,10 @@ namespace Librarian.Model.Data.Events
     {
         public BookCopy Copy
         { get; private set; }
-        public Customer Customer
-        { get; private set; }
-        public BookEvent(BookCopy copy, Customer customer, DateTime date) : base(date)
+        
+        public BookEvent(BookCopy copy, Customer customer, DateTime date) : base(customer, date)
         {
             Copy = copy;
-            Customer = customer;
         }
     }
 }

@@ -6,9 +6,12 @@ namespace Librarian.Model.Data.Events
     {
         public DateTime Date
         { get; private set; }
+        public Customer Customer
+        { get; private set; }
 
-        public Event(DateTime date)
+        public Event(Customer customer, DateTime date)
         {
+            Customer = customer; 
             Date = date;
         }
     }

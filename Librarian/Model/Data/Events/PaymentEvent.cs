@@ -5,14 +5,12 @@ namespace Librarian.Model.Data.Events
     public class PaymentEvent : Event
     {
 
-        public Customer Customer
-        { get; private set; }
         public double Amount
         { get; private set; }
 
-        public PaymentEvent(DateTime date, Customer customer, double amount) : base(date)
+        public PaymentEvent(DateTime date, Customer customer, double amount) : base(customer, date)
         {
-            Customer = customer;
+            
             Amount = amount;
         }
     }
