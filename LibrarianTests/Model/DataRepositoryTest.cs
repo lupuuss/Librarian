@@ -49,7 +49,7 @@ namespace LibrarianTests.Model
 
             _eventsInDataFiller = new List<Event>()
             {
-                new LendBookEvent(_bookCopiesInDataFiller[0], _customersInDataFiller[0], DateTime.ParseExact("15/03/2018","dd/mm/yyyy", null))
+                new LendBookEvent(_bookCopiesInDataFiller[0], _customersInDataFiller[0], DateTime.ParseExact("15/03/2018","dd/MM/yyyy", null))
             };
 
 
@@ -314,7 +314,7 @@ namespace LibrarianTests.Model
 
             _repo.AddEvent(new ReturnBookEvent(_bookCopiesInDataFiller[0],
                                                _customersInDataFiller[0],
-                                               DateTime.ParseExact("27/02/2020", "dd/mm/yyyy", null)));
+                                               DateTime.ParseExact("27/02/2020", "dd/MM/yyyy", null)));
 
             _repo.DeleteCustomer(_customersInDataFiller[0], true);
 
@@ -333,7 +333,7 @@ namespace LibrarianTests.Model
 
             var eve = new ReturnBookEvent(_bookCopiesInDataFiller[0],
                                           _customersInDataFiller[0],
-                                          DateTime.ParseExact("22/03/2018", "dd/mm/yyyy", null));
+                                          DateTime.ParseExact("22/03/2018", "dd/MM/yyyy", null));
 
             Assert.ThrowsException<InvalidEventException>(
                 () => _repo.AddEvent(eve)
@@ -351,7 +351,7 @@ namespace LibrarianTests.Model
 
             _repo.AddEvent(new ReturnBookEvent(_bookCopiesInDataFiller[0],
                                                _customersInDataFiller[0],
-                                               DateTime.ParseExact("22/04/2018", "dd/mm/yyyy", null),
+                                               DateTime.ParseExact("22/04/2018", "dd/MM/yyyy", null),
                                                3,
                                                PaymentCause.Postponed));
             

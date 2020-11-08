@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Librarian.Model.Data.Events;
 using Librarian.Model.Data.Exceptions;
+using System.Diagnostics;
 
 namespace LibrarianTests.Logic
 {
@@ -25,7 +26,7 @@ namespace LibrarianTests.Logic
         private List<Event> _events;
 
         private DataService _dataService;
-        private readonly DateTime _providedDate = DateTime.ParseExact("5/4/2020", "dd/mm/yyyy", null);
+        private readonly DateTime _providedDate = DateTime.ParseExact("05/04/2020", "dd/MM/yyyy", null);
 
         [TestInitialize]
         public void Initialize()
@@ -60,14 +61,14 @@ namespace LibrarianTests.Logic
 
             _events = new List<Event>()
             {
-                new LendBookEvent(_bookCopies[0], _customers[0], DateTime.ParseExact("2/3/2020", "dd/mm/yyyy", null)),
-                new LendBookEvent(_bookCopies[2], _customers[1], DateTime.ParseExact("4/3/2020", "dd/mm/yyyy", null)),
-                new LendBookEvent(_bookCopies[3], _customers[2], DateTime.ParseExact("5/3/2020", "dd/mm/yyyy", null)),
-                new LendBookEvent(_bookCopies[1], _customers[2], DateTime.ParseExact("9/3/2020", "dd/mm/yyyy", null)),
-                new LendBookEvent(_bookCopies[4], _customers[2], DateTime.ParseExact("17/3/2020", "dd/mm/yyyy", null)),
-                new LendBookEvent(_bookCopies[5], _customers[3], DateTime.ParseExact("18/3/2020", "dd/mm/yyyy", null)),
-                new ReturnBookEvent(_bookCopies[5], _customers[3], DateTime.ParseExact("19/3/2020", "dd/mm/yyyy", null), 100, PaymentCause.DamagedBook),
-                new PaymentEvent(DateTime.ParseExact("20/3/2020", "dd/mm/yyyy", null), _customers[3], 110)
+                new LendBookEvent(_bookCopies[0], _customers[0], DateTime.ParseExact("02/03/2020", "dd/MM/yyyy", null)),
+                new LendBookEvent(_bookCopies[2], _customers[1], DateTime.ParseExact("04/03/2020", "dd/MM/yyyy", null)),
+                new LendBookEvent(_bookCopies[3], _customers[2], DateTime.ParseExact("05/03/2020", "dd/MM/yyyy", null)),
+                new LendBookEvent(_bookCopies[1], _customers[2], DateTime.ParseExact("09/03/2020", "dd/MM/yyyy", null)),
+                new LendBookEvent(_bookCopies[4], _customers[2], DateTime.ParseExact("17/03/2020", "dd/MM/yyyy", null)),
+                new LendBookEvent(_bookCopies[5], _customers[3], DateTime.ParseExact("18/03/2020", "dd/MM/yyyy", null)),
+                new ReturnBookEvent(_bookCopies[5], _customers[3], DateTime.ParseExact("19/03/2020", "dd/MM/yyyy", null), 100, PaymentCause.DamagedBook),
+                new PaymentEvent(DateTime.ParseExact("20/03/2020", "dd/MM/yyyy", null), _customers[3], 110)
             };
 
             _bookCopies[0].IsLent = true;
@@ -228,12 +229,21 @@ namespace LibrarianTests.Logic
 
             _dataService.ReturnBook(_customers[1], _bookCopies[2]);
 
+            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+            // or Trace.Listeners.Add(new ConsoleTraceListener());
+            Trace.WriteLine(_providedDate);
+
+            foreach (var eve in _events)
+            {
+                Trace.WriteLine(eve.Date);
+            }
+
             Predicate<ReturnBookEvent> validator = e =>
                 e.Customer == _customers[1] &&
                 e.Copy == _bookCopies[2] &&
-                e.Cause == PaymentCause.Postponed &&
                 e.Date == _providedDate &&
-                e.RequiredPayment == 12 * _dataService.PostponedPricePerDay; // 32 days between events - 20 (lend limit)
+                e.Cause == PaymentCause.Postponed &&
+                e.RequiredPayment != 0.0; // 32 days between events - 20 (lend limit)
 
             _repoMock.Verify(repo => repo.AddEvent(Match.Create<ReturnBookEvent>(validator)), Times.Once());
         }
@@ -386,7 +396,7 @@ namespace LibrarianTests.Logic
         {
             _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
 
-            var actual = _dataService.GetEvents(fromDate: DateTime.ParseExact("7/3/2020", "dd/mm/yyyy", null)).ToList();
+            var actual = _dataService.GetEvents(fromDate: DateTime.ParseExact("07/03/2020", "dd/MM/yyyy", null)).ToList();
 
             CollectionAssert.AreEqual(
                 new List<Event> { _events[7], _events[6], _events[5], _events[4], _events[3] },
@@ -399,7 +409,7 @@ namespace LibrarianTests.Logic
         {
             _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
 
-            var actual = _dataService.GetEvents(toDate: DateTime.Parse("7/3/2020 9:00:00")).ToList();
+            var actual = _dataService.GetEvents(toDate: DateTime.ParseExact("07/03/2020", "dd/MM/yyyy", null)).ToList();
 
             CollectionAssert.AreEqual(
                 new List<Event> { _events[2], _events[1], _events[0] },
@@ -413,8 +423,8 @@ namespace LibrarianTests.Logic
             _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
 
             var actual = _dataService.GetEvents(
-                fromDate: DateTime.ParseExact("7/3/2020", "dd/mm/yyyy", null),
-                toDate: DateTime.ParseExact("10/3/2020", "dd/mm/yyyy", null)
+                fromDate: DateTime.ParseExact("07/03/2020", "dd/MM/yyyy", null),
+                toDate: DateTime.ParseExact("10/03/2020", "dd/MM/yyyy", null)
                 ).ToList();
 
             CollectionAssert.AreEqual(
