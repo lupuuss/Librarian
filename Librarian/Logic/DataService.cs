@@ -162,7 +162,7 @@ namespace Librarian.Logic
                 result = result.Where(e => e.Date < toDate); 
             }
 
-            return result;
+            return result.OrderByDescending(e => e.Date);
         }
 
         public Dictionary<Book, int> GetBooks()
