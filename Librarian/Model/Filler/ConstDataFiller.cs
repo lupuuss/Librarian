@@ -34,7 +34,7 @@ namespace Librarian.Model.Filler
 
             if (bookCopies != null)
             {
-                _bookCopies = new ObservableCollection<BookCopy>(_bookCopies);
+                _bookCopies = new ObservableCollection<BookCopy>(bookCopies);
             }
 
             if (events != null)

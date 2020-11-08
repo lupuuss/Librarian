@@ -15,6 +15,8 @@ namespace LibrarianTests.Model
 
         private DataRepository _repo;
         private List<Book> _booksInDataFiller;
+        private List<Customer> _customersInDataFiller;
+        private List<BookCopy> _bookCopiesInDataFiller; 
 
         [TestInitialize]
         public void Initialize()
@@ -27,12 +29,20 @@ namespace LibrarianTests.Model
                  new Book(new Isbn("978-3-16-148498-0"), "Animal Farm", "George Orwell")
             };
 
-            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
+            _customersInDataFiller = new List<Customer>()
+            {
+                new Customer("Jan", "Kowalski", new Address("street", "postalCode", "city", "country")),
+                new Customer("Adam", "Nowak", new Address("street2", "postalCode2", "city2", "country2"))
+            };
+
+            
         }
 
         [TestMethod]
         public void AddBook_BookNotInRepository_BookAdded()
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
+
             var book = new Book(new Isbn("978-3-16-118410-0"), "Sample", "Sample Author");
 
             _repo.AddBook(book);
@@ -43,6 +53,7 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void AddBook_BookInTheRepository_ExceptionThrown()
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
 
             Assert.ThrowsException<DataAlreadyExistsException>(
                 () => _repo.AddBook(_booksInDataFiller.First())
@@ -52,6 +63,7 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void GetAllBooks_Always_ReturnsEveryAddedBook()
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
 
             var actual = _repo.GetAllBooks();
 
@@ -64,6 +76,8 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void RemoveBook_BookInTheRepository_BookRemoved()
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
+
             _repo.DeleteBook(_booksInDataFiller[2].Isbn);
             _booksInDataFiller.RemoveAt(2);
 
@@ -78,6 +92,8 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void RemoveBook_BookNotInTheRepository_ExceptionThrown()
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
+
             var book = new Book(new Isbn("978-3-77-118410-0"), "Sample", "Sample Author");
 
             Assert.ThrowsException<DataNotRemovedException>(
@@ -89,6 +105,8 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void GetBook_BookInTheRepository_BookReturned()
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
+
             var actual = _booksInDataFiller[3];
 
             Assert.AreEqual(
@@ -100,6 +118,8 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void GetBook_BookNotInTheRepository_ExceptionThrown()
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
+
             var book = new Book(new Isbn("978-3-77-118410-0"), "Sample", "Sample Author");
 
             Assert.ThrowsException<DataNotExistsException>(
@@ -109,6 +129,8 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void AddBookCopy_BookCopyNotInTheRepository_BookCopyAdded()
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
+
             var bookCopy = new BookCopy(_booksInDataFiller[0], BookCopy.States.Good, 100);
 
             _repo.AddBookCopy(bookCopy);
@@ -119,6 +141,8 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void AddBookCopy_BookInTheRepositoryAlreadyExists_ExceptionThrown() 
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
+
             var bookCopy = new BookCopy(_booksInDataFiller[0], BookCopy.States.Good, 100);
 
             _repo.AddBookCopy(bookCopy);
@@ -131,6 +155,8 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void AddBookCopy_BookDoesNotExistsInTheRepository_ExceptionThrown()
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
+
             var Book = new Book(new Isbn("978-3-77-118111-0"), "Sample2", "Sample Author2");
             var bookCopy = new BookCopy(Book, BookCopy.States.Good, 100);
 
@@ -141,6 +167,8 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void GetBookCopy_BookIdDoesNotExist_ExceptionThrown()
         {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
+
             Assert.ThrowsException<DataNotExistsException>(
                 () => _repo.GetBookCopy(1)              
                 );
@@ -149,20 +177,24 @@ namespace LibrarianTests.Model
         [TestMethod]
         public void DeleteBookCopy_BookCopyInTheRepository_BookCopyRemoved()
         {
-            var bookCopy = new BookCopy(_booksInDataFiller[0], BookCopy.States.Good, 10);
-            var empty = _repo.GetAllBookCopies();
+            var bookCopy = new BookCopy(_booksInDataFiller[0], BookCopy.States.Good, 100);
+            _bookCopiesInDataFiller = new List<BookCopy>()
+            {
+                bookCopy
+            };
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller, bookCopies: _bookCopiesInDataFiller));
 
-            _repo.AddBookCopy(bookCopy);
-
-            _repo.DeleteBookCopy(bookCopy);
-
-            var actualList = _repo.GetAllBookCopies(); 
-
-            
+           
             CollectionAssert.AreEqual(
-                (System.Collections.ICollection)actualList,
-                (System.Collections.ICollection)empty
+                _bookCopiesInDataFiller,
+                (System.Collections.ICollection)_repo.GetAllBookCopies()
                 );
+        }
+
+        [TestMethod] 
+        public void DeleteBook_BookHaveDepentedEvents_ExceptionThrown()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller, customers: _customersInDataFiller));
         }
     }
 }
