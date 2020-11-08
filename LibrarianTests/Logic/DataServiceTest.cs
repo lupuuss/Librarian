@@ -193,11 +193,10 @@ namespace LibrarianTests.Logic
         {
             _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
 
-            var exception = Assert.ThrowsException<DataServiceException>(
+                Assert.ThrowsException<DataServiceException>(
                 () => _dataService.ReturnBook(_customers[2], _bookCopies[0])
                 );
 
-            Assert.IsInstanceOfType(exception.InnerException, typeof(Exception));
         }
 
         [TestMethod]
@@ -229,21 +228,12 @@ namespace LibrarianTests.Logic
 
             _dataService.ReturnBook(_customers[1], _bookCopies[2]);
 
-            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
-            // or Trace.Listeners.Add(new ConsoleTraceListener());
-            Trace.WriteLine(_providedDate);
-
-            foreach (var eve in _events)
-            {
-                Trace.WriteLine(eve.Date);
-            }
-
             Predicate<ReturnBookEvent> validator = e =>
                 e.Customer == _customers[1] &&
                 e.Copy == _bookCopies[2] &&
                 e.Date == _providedDate &&
                 e.Cause == PaymentCause.Postponed &&
-                e.RequiredPayment != 0.0; // 32 days between events - 20 (lend limit)
+                e.RequiredPayment == 12 * _dataService.PostponedPricePerDay; // 32 days between events - 20 (lend limit)
 
             _repoMock.Verify(repo => repo.AddEvent(Match.Create<ReturnBookEvent>(validator)), Times.Once());
         }
@@ -279,7 +269,7 @@ namespace LibrarianTests.Logic
                 Utils.AreEqual(
                     e.RequiredPayment,
                     _bookCopies[0].BasePrice * _dataService.PaymentsModifiers[_bookCopies[0].State] / 100.0,
-                    0.001
+
                     );
 
             _repoMock.Verify(repo => repo.AddEvent(Match.Create<ReturnBookEvent>(validator)), Times.Once());
