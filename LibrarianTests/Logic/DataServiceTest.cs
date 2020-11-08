@@ -170,10 +170,13 @@ namespace LibrarianTests.Logic
 
             _dataService.LendBook(_customers[0], _bookCopies[1]);
 
+            Predicate<LendBookEvent> validator = e => 
+                e.Customer == _customers[0] && 
+                e.Copy == _bookCopies[1] && 
+                e.Date == _providedDate;
+
             _repoMock.Verify(
-                repo => repo.AddEvent(
-                    Match.Create<LendBookEvent>(e => e.Customer == _customers[0] && e.Copy == _bookCopies[1] && e.Date == _providedDate)
-                    ),
+                repo => repo.AddEvent(Match.Create<LendBookEvent>(validator)), 
                 Times.Once()
                 );
         }
@@ -308,6 +311,23 @@ namespace LibrarianTests.Logic
                     );
 
             _repoMock.Verify(repo => repo.AddEvent(Match.Create<ReturnBookEvent>(validator)), Times.Once());
+        }
+
+        [TestMethod]
+        public void ReturnDamagedBook_RepositoryThrowsException_ThrowsException()
+        {
+
+            _repoMock
+                .Setup(repo => repo.AddEvent(It.IsAny<Event>()))
+                .Throws(new EventException("Test event exception!"));
+
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var exception = Assert.ThrowsException<DataServiceException>(
+                () => _dataService.ReturnDamagedBook(_customers[1], _bookCopies[2])
+                );
+
+            Assert.IsInstanceOfType(exception.InnerException, typeof(EventException));
         }
 
         [TestMethod]
@@ -484,6 +504,8 @@ namespace LibrarianTests.Logic
                 () => _dataService.AddBook(isbn, "Title", "Author")
                 );
 
+            Assert.IsInstanceOfType(exception.InnerException, typeof(DataException));
+
             Predicate<Book> validator = e =>
                 e.Isbn == isbn &&
                 e.Name == "Title" &&
@@ -491,6 +513,50 @@ namespace LibrarianTests.Logic
 
             _repoMock.Verify(
                 repo => repo.AddBook(Match.Create<Book>(validator)),
+                Times.Once()
+                );
+        }
+
+        [TestMethod]
+        public void AddBookCopy_RepositoryAcceptsInput_AddsBookCopy()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            _dataService.AddBookCopy(_books[0], BookCopy.States.New, 10.0);
+
+            Predicate<BookCopy> validator = e =>
+                e.Book == _books[0] &&
+                e.State == BookCopy.States.New &&
+                e.BasePrice == 10.0;
+
+            _repoMock.Verify(
+                repo => repo.AddBookCopy(Match.Create<BookCopy>(validator)),
+                Times.Once()
+                );
+        }
+
+        [TestMethod]
+        public void AddBookCopy_RepositoryThrowsException_ThrowsException()
+        {
+            _repoMock
+               .Setup(repo => repo.AddBookCopy(It.IsAny<BookCopy>()))
+               .Throws(new DataException("Test data exception!"));
+
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var exception = Assert.ThrowsException<DataServiceException>(
+                () => _dataService.AddBookCopy(_books[0], BookCopy.States.New, 10.0)
+                );
+
+            Assert.IsInstanceOfType(exception.InnerException, typeof(DataException));
+
+            Predicate<BookCopy> validator = e =>
+                e.Book == _books[0] &&
+                e.State == BookCopy.States.New &&
+                e.BasePrice == 10.0;
+
+            _repoMock.Verify(
+                repo => repo.AddBookCopy(Match.Create<BookCopy>(validator)),
                 Times.Once()
                 );
         }
