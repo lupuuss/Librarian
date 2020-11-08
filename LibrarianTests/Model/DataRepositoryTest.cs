@@ -87,7 +87,9 @@ namespace LibrarianTests.Model
 
             _repo.AddBook(book);
 
-            Assert.AreEqual(book, _repo.GetBook(book.Isbn));
+            var actual = _repo.GetBook(book.Isbn);
+
+            Assert.AreEqual(book, actual);
         }
 
         [TestMethod]
@@ -121,11 +123,11 @@ namespace LibrarianTests.Model
             _repo.DeleteBook(_booksInDataFiller[2].Isbn);
             _booksInDataFiller.RemoveAt(2);
 
-            var actual = _repo.GetAllBooks();
+            var actual = (System.Collections.ICollection)_repo.GetAllBooks();
 
             CollectionAssert.AreEqual(
                 _booksInDataFiller,
-                (System.Collections.ICollection)actual
+                actual
                 );
         }
 
@@ -147,10 +149,10 @@ namespace LibrarianTests.Model
         {
             _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
 
-            var actual = _booksInDataFiller[3];
+            var actual = _repo.GetBook(_booksInDataFiller[3].Isbn);
 
             Assert.AreEqual(
-                _repo.GetBook(actual.Isbn),
+                _booksInDataFiller[3],
                 actual
                 );
         }
@@ -175,7 +177,9 @@ namespace LibrarianTests.Model
 
             _repo.AddBookCopy(bookCopy);
 
-            Assert.AreEqual(bookCopy, _repo.GetBookCopy(0));
+            var actual = _repo.GetBookCopy(0);
+
+            Assert.AreEqual(bookCopy, actual);
         }
 
         [TestMethod]
@@ -224,9 +228,11 @@ namespace LibrarianTests.Model
             _repo.DeleteBookCopy(_bookCopiesInDataFiller[0]);
             _bookCopiesInDataFiller.RemoveAt(0);
 
+            var actual = (System.Collections.ICollection)_repo.GetAllBookCopies();
+
             CollectionAssert.AreEqual(
                 _bookCopiesInDataFiller,
-                (System.Collections.ICollection)_repo.GetAllBookCopies()
+                actual
                 );
         }
 
@@ -311,6 +317,9 @@ namespace LibrarianTests.Model
                                                DateTime.ParseExact("27/02/2020", "dd/mm/yyyy", null)));
 
             _repo.DeleteCustomer(_customersInDataFiller[0], true);
+
+            var actual = _repo.GetAllEvents().Count();
+            Assert.AreEqual(0, actual);
 
         }
 
