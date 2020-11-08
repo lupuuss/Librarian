@@ -48,10 +48,10 @@ namespace LibrarianTests.Logic
 
             _bookCopies = new List<BookCopy>()
             {
-                new BookCopy(_books[0], BookCopy.States.Good, 10.0),
+                new BookCopy(_books[0], BookCopy.States.New, 10.0),
                 new BookCopy(_books[0], BookCopy.States.Good, 11.0),
                 new BookCopy(_books[1], BookCopy.States.Good, 12.0),
-                new BookCopy(_books[2], BookCopy.States.Good, 13.0),
+                new BookCopy(_books[2], BookCopy.States.Used, 13.0),
                 new BookCopy(_books[3], BookCopy.States.Good, 14.0)
             };
 
@@ -59,7 +59,9 @@ namespace LibrarianTests.Logic
             {
                 new LendBookEvent(_bookCopies[0], _customers[0], DateTime.Parse("2/3/2020 9:00:00")),
                 new LendBookEvent(_bookCopies[2], _customers[1], DateTime.Parse("4/3/2020 9:00:00")),
-                new LendBookEvent(_bookCopies[3], _customers[2], DateTime.Parse("5/3/2020 9:00:00"))
+                new LendBookEvent(_bookCopies[3], _customers[2], DateTime.Parse("5/3/2020 9:00:00")),
+                new LendBookEvent(_bookCopies[1], _customers[2], DateTime.Parse("9/3/2020 9:00:00")),
+                new LendBookEvent(_bookCopies[4], _customers[2], DateTime.Parse("17/3/2020 9:00:00"))
             };
 
             _bookCopies[0].IsLent = true;
@@ -77,6 +79,14 @@ namespace LibrarianTests.Logic
             _repoMock
                 .Setup(repo => repo.GetAllEvents())
                 .Returns(() => _events);
+
+            _repoMock
+                .Setup(repo => repo.GetAllBooks())
+                .Returns(() => _books);
+
+            _repoMock
+                .Setup(repo => repo.GetAllBookCopies())
+                .Returns(() => _bookCopies);
         }
 
         [TestMethod]
@@ -233,6 +243,256 @@ namespace LibrarianTests.Logic
                 );
 
             Assert.IsInstanceOfType(exception.InnerException, typeof(EventException));
+        }
+
+        [TestMethod]
+        public void ReturnDamagedBook_RepositoryAcceptsInputAndBookStateNew_AddsEventWithBookDamage()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            _dataService.ReturnDamagedBook(_customers[0], _bookCopies[0]);
+
+            Predicate<ReturnBookEvent> validator = e =>
+                e.Customer == _customers[0] &&
+                e.Copy == _bookCopies[0] &&
+                e.Cause == PaymentCause.DamagedBook &&
+                e.Date == _providedDate &&
+                Utils.AreEqual(
+                    e.RequiredPayment,
+                    _bookCopies[0].BasePrice * _dataService.paymentsModifiers[_bookCopies[0].State] / 100.0,
+                    0.001
+                    );
+
+            _repoMock.Verify(repo => repo.AddEvent(Match.Create<ReturnBookEvent>(validator)), Times.Once());
+
+        }
+
+        [TestMethod]
+        public void ReturnDamagedBook_RepositoryAcceptsInputAndBookStateGood_AddsEventWithBookDamage()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            _dataService.ReturnDamagedBook(_customers[2], _bookCopies[3]);
+
+            Predicate<ReturnBookEvent> validator = e =>
+                e.Customer == _customers[2] &&
+                e.Copy == _bookCopies[3] &&
+                e.Cause == PaymentCause.DamagedBook &&
+                e.Date == _providedDate &&
+                Utils.AreEqual(
+                    e.RequiredPayment,
+                    _bookCopies[3].BasePrice * _dataService.paymentsModifiers[_bookCopies[3].State] / 100.0,
+                    0.001
+                    );
+
+
+            _repoMock.Verify(repo => repo.AddEvent(Match.Create<ReturnBookEvent>(validator)), Times.Once());
+        }
+
+        [TestMethod]
+        public void ReturnDamagedBook_RepositoryAcceptsInputAndBookStateUsed_AddsEventWithBookDamage()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            _dataService.ReturnDamagedBook(_customers[1], _bookCopies[2]);
+
+            Predicate<ReturnBookEvent> validator = e =>
+                e.Customer == _customers[1] &&
+                e.Copy == _bookCopies[2] &&
+                e.Cause == PaymentCause.DamagedBook &&
+                e.Date == _providedDate &&
+                Utils.AreEqual(
+                    e.RequiredPayment, 
+                    _bookCopies[2].BasePrice * _dataService.paymentsModifiers[_bookCopies[2].State] / 100.0,
+                    0.001
+                    );
+
+            _repoMock.Verify(repo => repo.AddEvent(Match.Create<ReturnBookEvent>(validator)), Times.Once());
+        }
+
+        [TestMethod]
+        public void GetCustomerHistory_Always_ReturnsAllCustomerEventsInDateDescendingOrder()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var actual = _dataService.GetCustomerHistory(_customers[0])
+                .ToList();
+
+            CollectionAssert.AreEqual(
+                new List<Event> { _events[0] },
+                actual
+                );
+
+
+            actual = _dataService.GetCustomerHistory(_customers[1])
+                .ToList();
+
+            CollectionAssert.AreEqual(
+                new List<Event> { _events[1] },
+                actual
+                );
+
+            actual = _dataService.GetCustomerHistory(_customers[2])
+                .ToList();
+
+
+            CollectionAssert.AreEqual(
+                new List<Event> { _events[4], _events[3], _events[2] },
+                actual
+                );
+        }
+        
+        [TestMethod]
+        public void GetEvents_NoParameters_ReturnsAllEventsInDescendingOrder()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var actual = _dataService.GetEvents().ToList();
+
+            CollectionAssert.AreEqual(
+                _events.OrderByDescending(e => e.Date).ToList(),
+                actual
+                );
+        }
+
+        [TestMethod]
+        public void GetEvents_OnlyFromParam_ReturnsEventsAfterPassedDateInDescendingOrder()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var actual = _dataService.GetEvents(fromDate: DateTime.Parse("7/3/2020 9:00:00")).ToList();
+
+            CollectionAssert.AreEqual(
+                new List<Event> { _events[4], _events[3] },
+                actual
+                );
+        }
+
+        [TestMethod]
+        public void GetEvents_OnlyToParam_ReturnsEventsBeforePassedDateInDescendingOrder()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var actual = _dataService.GetEvents(toDate: DateTime.Parse("7/3/2020 9:00:00")).ToList();
+
+            CollectionAssert.AreEqual(
+                new List<Event> { _events[2], _events[1], _events[0] },
+                actual
+                );
+        }
+
+        [TestMethod]
+        public void GetEvents_BothParams_ReturnsEventsBetweenPassedDatesInDescendingOrder()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var actual = _dataService.GetEvents(
+                fromDate: DateTime.Parse("7/3/2020 9:00:00"),
+                toDate: DateTime.Parse("10/3/2020 9:00:00")
+                ).ToList();
+
+            CollectionAssert.AreEqual(
+                new List<Event> { _events[3] },
+                actual
+                );
+        }
+
+        [TestMethod]
+        public void GetBooks_Always_ReturnsBooksWithCopiesCount()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var actualBooks = _dataService.GetBooks();
+
+            Assert.AreEqual(2, actualBooks[_books[0]]);
+
+            Assert.AreEqual(1, actualBooks[_books[1]]);
+
+            Assert.AreEqual(1, actualBooks[_books[2]]);
+
+            Assert.AreEqual(1, actualBooks[_books[3]]);
+        }
+    
+        [TestMethod]
+        public void GetAllCopies_Always_ReturnAllCopiesForPassedIsbnInStateDescendingOrder()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var actual = _dataService.GetAllCopies(_books[0].Isbn);
+
+            CollectionAssert.AreEqual(
+                new List<BookCopy> { _bookCopies[0], _bookCopies[1] },
+                actual.ToList()
+                );
+
+            actual = _dataService.GetAllCopies(_books[1].Isbn);
+
+            CollectionAssert.AreEqual(
+                new List<BookCopy> { _bookCopies[2] },
+                actual.ToList()
+                );
+
+            actual = _dataService.GetAllCopies(_books[2].Isbn);
+
+            CollectionAssert.AreEqual(
+                new List<BookCopy> { _bookCopies[3] },
+                actual.ToList()
+                );
+
+            actual = _dataService.GetAllCopies(_books[3].Isbn);
+
+            CollectionAssert.AreEqual(
+                new List<BookCopy> { _bookCopies[4] },
+                actual.ToList()
+                );
+        }
+    
+    
+        [TestMethod]
+        public void AddBook_RepositoryAcceptsInput_AddsBook()
+        {
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var isbn = new Isbn("979-3-16-148410-0");
+
+            _dataService.AddBook(isbn, "Title", "Author");
+
+            Predicate<Book> validator = e =>
+                e.Isbn == isbn &&
+                e.Name == "Title" &&
+                e.Author == "Author";
+
+            _repoMock.Verify(
+                repo => repo.AddBook(Match.Create<Book>(validator)),
+                Times.Once()
+                );
+        }
+
+        [TestMethod]
+        public void AddBook_RepositoryThrowsException_ThrowsException()
+        {
+
+            _repoMock
+                .Setup(repo => repo.AddBook(It.IsAny<Book>()))
+                .Throws(new DataException("Test data exception!"));
+
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var isbn = new Isbn("979-3-16-148410-0");
+
+            var exception = Assert.ThrowsException<DataServiceException>(
+                () => _dataService.AddBook(isbn, "Title", "Author")
+                );
+
+            Predicate<Book> validator = e =>
+                e.Isbn == isbn &&
+                e.Name == "Title" &&
+                e.Author == "Author";
+
+            _repoMock.Verify(
+                repo => repo.AddBook(Match.Create<Book>(validator)),
+                Times.Once()
+                );
         }
     }
 }
