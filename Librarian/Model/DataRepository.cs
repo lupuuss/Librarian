@@ -2,7 +2,6 @@
 using Librarian.Model.Data.Events;
 using Librarian.Model.Data.Exceptions;
 using Librarian.Model.Filler;
-using Librarian;
 using System.Collections.Generic;
 using System.Linq;
 

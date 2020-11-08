@@ -1,6 +1,5 @@
 ﻿using System;
 using Librarian.Model.Data;
-using Librarian.Model.Data.Events;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace LibrarianTests.Model.Data

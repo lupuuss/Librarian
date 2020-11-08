@@ -5,7 +5,6 @@ using Librarian.Model.Data.Exceptions;
 using Librarian.Model.Date;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Librarian.Logic

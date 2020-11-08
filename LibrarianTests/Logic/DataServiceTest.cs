@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Librarian.Model.Data.Events;
 using Librarian.Model.Data.Exceptions;
-using System.Diagnostics;
+
 
 namespace LibrarianTests.Logic
 {
@@ -269,7 +269,7 @@ namespace LibrarianTests.Logic
                 Utils.AreEqual(
                     e.RequiredPayment,
                     _bookCopies[0].BasePrice * _dataService.PaymentsModifiers[_bookCopies[0].State] / 100.0,
-
+                    0.001
                     );
 
             _repoMock.Verify(repo => repo.AddEvent(Match.Create<ReturnBookEvent>(validator)), Times.Once());
