@@ -1,12 +1,12 @@
 ﻿using Librarian.Model;
 using Librarian.Model.Data;
 using Librarian.Model.Data.Events;
+using Librarian.Model.Data.Exceptions;
 using Librarian.Model.Date;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
-using System.Xml.Schema;
 
 namespace Librarian.Logic
 {
@@ -28,6 +28,16 @@ namespace Librarian.Logic
 
         public double PostponedPricePerDay
         { get; set; } = 0.5;
+
+        public Dictionary<BookCopy.States, double> paymentsModifiers
+        { get; private set; } = new Dictionary<BookCopy.States, double>
+        {
+            { BookCopy.States.New, 100 },
+            { BookCopy.States.Good, 80 },
+            { BookCopy.States.Used, 60 },
+            { BookCopy.States.Damaged, 0 },
+            { BookCopy.States.NeedReplacement, 0 }
+        };
 
         public DataService(IDataRepository dataRepository, IDateProvider dateProvider)
         {
@@ -59,7 +69,13 @@ namespace Librarian.Logic
         {
             var lend = new LendBookEvent(bookCopy, customer, _dateProvider.Now());
 
-            _dataRepository.AddEvent(lend); 
+            try
+            {
+                _dataRepository.AddEvent(lend);
+            } catch (EventException e)
+            {
+                throw new DataServiceException(e);
+            }
         }
 
         public void ReturnBook(Customer customer, BookCopy bookCopy)
@@ -69,32 +85,59 @@ namespace Librarian.Logic
                 .GetAllEvents()
                 .Where(e => e is LendBookEvent)
                 .Cast<LendBookEvent>()
+                .Where(e => e.Customer == customer && e.Copy == bookCopy)
                 .OrderByDescending(e => e.Date)
                 .FirstOrDefault();
 
-            if (corespondingLend != null)
+            if (corespondingLend == null)
             {
-                throw new NotImplementedException();
+                throw new DataServiceException(
+                    new Exception("No coresponding lend in repository! Book is not lent!")
+                    );
             }
 
-            var betweenDates = (date - corespondingLend.Date).Days;
-
-            if (betweenDates < LendLimit)
+            try
             {
-                _dataRepository.AddEvent(new ReturnBookEvent(bookCopy, customer, date));
+
+                var betweenDates = (date - corespondingLend.Date).Days;
+
+                if (betweenDates < LendLimit)
+                {
+                    _dataRepository.AddEvent(new ReturnBookEvent(bookCopy, customer, date));
+                    return;
+                }
+
+                var price = ((double)betweenDates - LendLimit) * PostponedPricePerDay;
+
+                _dataRepository.AddEvent(
+                    new ReturnBookEvent(bookCopy, customer, date, price, PaymentCause.Postponed)
+                    );
+
+            } catch (EventException e)
+            {
+                throw new DataServiceException(e);
             }
-
-            var price = ((double)betweenDates) * PostponedPricePerDay;
-
-            _dataRepository.AddEvent(
-                new ReturnBookEvent(bookCopy, customer, date, price, PaymentCause.Postponed)
-                ); 
         }
 
         public void ReturnDamagedBook(Customer customer, BookCopy bookCopy)
         {
-            var retunBook = new ReturnBookEvent(bookCopy, customer, _dateProvider.Now(), bookCopy.Price, PaymentCause.DamagedBook);
-            _dataRepository.AddEvent(retunBook); 
+            var price = bookCopy.BasePrice * (paymentsModifiers[bookCopy.State] / 100.0);
+
+            var retunBook = new ReturnBookEvent(
+                bookCopy,
+                customer, 
+                _dateProvider.Now(),
+                price,
+                PaymentCause.DamagedBook
+                );
+
+            try
+            {
+                _dataRepository.AddEvent(retunBook);
+            } catch (EventException e)
+            {
+                throw new DataServiceException(e);
+            }
         }
 
         public IEnumerable<Event> GetCustomerHistory(Customer customer)
@@ -149,13 +192,27 @@ namespace Librarian.Logic
         public void AddBook(Isbn isbn, string name, string author)
         {
             var book = new Book(isbn, name, author);
-            _dataRepository.AddBook(book); 
+
+            try
+            {
+                _dataRepository.AddBook(book);
+            } catch (DataException e)
+            {
+                throw new DataServiceException(e);
+            }
         }
 
         public void AddBookCopy(Book book, BookCopy.States state, double price)
         {
             var bookCopy = new BookCopy(book, state, price);
-            _dataRepository.AddBookCopy(bookCopy); 
+            try
+            {
+                _dataRepository.AddBookCopy(bookCopy);
+            } catch (DataException e)
+            {
+                throw new DataServiceException(e);
+            }
+
         }
     }
 }
