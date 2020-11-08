@@ -44,16 +44,6 @@ namespace Librarian.Model.Data.Events
             ) : this(copy, customer, date)
         {
 
-            if (requiredPayment < 0.0)
-            {
-                throw new ArgumentException("Required payment cannot be negative number!");
-            }
-
-            if (requiredPayment != 0.0 && cause == PaymentCause.None)
-            {
-                throw new ArgumentException("PaymentCause cannot be None if requiredPayment != 0!");
-            }
-
             RequiredPayment = requiredPayment;
             Cause = cause;
         }

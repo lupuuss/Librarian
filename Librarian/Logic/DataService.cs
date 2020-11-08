@@ -13,9 +13,8 @@ namespace Librarian.Logic
 
     public class DataServiceException : Exception
     {
-        public DataServiceException(
-            Exception cause
-            ) : base("DataService task failed! Cause: " + cause.GetType().Name, cause) { }
+        public DataServiceException(Exception cause)
+            : base("DataService task failed! Cause: " + cause.GetType().Name, cause) { }
     }
 
     public class DataService : IDataService
@@ -29,7 +28,7 @@ namespace Librarian.Logic
         public double PostponedPricePerDay
         { get; set; } = 0.5;
 
-        public Dictionary<BookCopy.States, double> paymentsModifiers
+        public Dictionary<BookCopy.States, double> PaymentsModifiers
         { get; private set; } = new Dictionary<BookCopy.States, double>
         {
             { BookCopy.States.New, 100 },
@@ -121,7 +120,7 @@ namespace Librarian.Logic
 
         public void ReturnDamagedBook(Customer customer, BookCopy bookCopy)
         {
-            var price = bookCopy.BasePrice * (paymentsModifiers[bookCopy.State] / 100.0);
+            var price = bookCopy.BasePrice * (PaymentsModifiers[bookCopy.State] / 100.0);
 
             var retunBook = new ReturnBookEvent(
                 bookCopy,

@@ -284,6 +284,16 @@ namespace Librarian.Model
         {
             CheckBookEvent(returnBookEvent);
 
+            if (returnBookEvent.RequiredPayment < 0.0)
+            {
+                throw new InvalidEventException("Required payment cannot be negative number!");
+            }
+
+            if (returnBookEvent.RequiredPayment != 0.0 && returnBookEvent.Cause == PaymentCause.None)
+            {
+                throw new InvalidEventException("PaymentCause cannot be None if requiredPayment != 0!");
+            }
+
             if (!returnBookEvent.Copy.IsLent)
             {
                 throw new InvalidEventException("Cannot return book which is not lent");
@@ -312,7 +322,7 @@ namespace Librarian.Model
         {
             CheckCustomerExistance(paymentEvent.Customer);
 
-            if (paymentEvent.Amount > 0)
+            if (paymentEvent.Amount <= 0)
             {
                 throw new InvalidEventException("Payment amount must be positive number!");
             }
