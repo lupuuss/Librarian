@@ -43,11 +43,11 @@ namespace LibrarianTests.Model.Filler
 
             var events = new List<Event>()
             {
-                new LendBookEvent(bookCopies[0], customers[0], DateTime.Parse("2/3/2020 9:00:00")),
-                new LendBookEvent(bookCopies[2], customers[1], DateTime.Parse("4/3/2020 9:00:00")),
-                new LendBookEvent(bookCopies[3], customers[2], DateTime.Parse("5/3/2020 9:00:00")),
-                new LendBookEvent(bookCopies[1], customers[2], DateTime.Parse("9/3/2020 9:00:00")),
-                new LendBookEvent(bookCopies[4], customers[2], DateTime.Parse("17/3/2020 9:00:00"))
+                new LendBookEvent(bookCopies[0], customers[0], DateTime.ParseExact("2/3/2020", "dd/mm/yyyy", null)),
+                new LendBookEvent(bookCopies[2], customers[1], DateTime.ParseExact("4/3/2020", "dd/mm/yyyy", null)),
+                new LendBookEvent(bookCopies[3], customers[2], DateTime.ParseExact("5/3/2020", "dd/mm/yyyy", null)),
+                new LendBookEvent(bookCopies[1], customers[2], DateTime.ParseExact("9/3/2020", "dd/mm/yyyy", null)),
+                new LendBookEvent(bookCopies[4], customers[2], DateTime.ParseExact("17/3/2020", "dd/mm/yyyy", null))
             };
 
             ConstDataFiller dataFiller = new ConstDataFiller(
