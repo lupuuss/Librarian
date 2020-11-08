@@ -5,7 +5,9 @@ using Librarian.Model.Filler;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
+using Librarian.Model.Data.Events;
 using System;
+using Librarian.Model.Date;
 
 namespace LibrarianTests.Model
 {
@@ -16,14 +18,18 @@ namespace LibrarianTests.Model
         private DataRepository _repo;
         private List<Book> _booksInDataFiller;
         private List<Customer> _customersInDataFiller;
-        private List<BookCopy> _bookCopiesInDataFiller; 
+        private List<BookCopy> _bookCopiesInDataFiller;
+        private List<Event> _eventsInDataFiller;
+        private SystemDateProvider _dateProvider;
 
         [TestInitialize]
         public void Initialize()
         {
+            _dateProvider = new SystemDateProvider();
+
             _booksInDataFiller = new List<Book>()
             {
-                 new Book(new Isbn("978-3-16-148410-0"), "The Da Vinci Code", "Dan Brown"), 
+                 new Book(new Isbn("978-3-16-148410-0"), "The Da Vinci Code", "Dan Brown"),
                  new Book(new Isbn("978-3-16-148427-0"), "The Alchemist", "Paulo Coelho"),
                  new Book(new Isbn("978-3-16-148422-0"), "A Study in Scarlet", "Arthur Conan Doyle"),
                  new Book(new Isbn("978-3-16-148498-0"), "Animal Farm", "George Orwell")
@@ -31,11 +37,45 @@ namespace LibrarianTests.Model
 
             _customersInDataFiller = new List<Customer>()
             {
-                new Customer("Jan", "Kowalski", new Address("street", "postalCode", "city", "country")),
-                new Customer("Adam", "Nowak", new Address("street2", "postalCode2", "city2", "country2"))
+                new Customer("Jan", "Kowalski", new Address("street", "11-222", "city", "country")),
+                new Customer("Adam", "Nowak", new Address("street2", "22-333", "city2", "country2"))
             };
 
-            
+            _bookCopiesInDataFiller = new List<BookCopy>()
+            {
+                new BookCopy(_booksInDataFiller[0], BookCopy.States.Good, 100),
+                new BookCopy(_booksInDataFiller[3], BookCopy.States.Good, 50)
+            };
+
+            _eventsInDataFiller = new List<Event>()
+            {
+                new LendBookEvent(_bookCopiesInDataFiller[0], _customersInDataFiller[0], DateTime.ParseExact("15/03/2018","dd/mm/yyyy", null))
+            };
+
+
+        }
+
+
+        [TestMethod]
+        public void AddCustomer_CustomerNotInRepository_AddsToRepository()
+        {
+            _repo = new DataRepository(new ConstDataFiller());
+
+            var customer = new Customer("Name", "LastName", new Address("street", "00-000", "city", "country"));
+            _repo.AddCustomer(customer);
+            var actual = _repo.GetAllCustomers().Count();
+
+            Assert.AreEqual(1, actual);
+
+        }
+
+        public void AddCustomer_CustomerAlreadyInRepository_ExceptionThrown()
+        {
+            _repo = new DataRepository(new ConstDataFiller(customers: _customersInDataFiller));
+
+            Assert.ThrowsException<DataAlreadyExistsException>(
+                () => _repo.AddCustomer(_customersInDataFiller[0])
+                );
         }
 
         [TestMethod]
@@ -57,7 +97,7 @@ namespace LibrarianTests.Model
 
             Assert.ThrowsException<DataAlreadyExistsException>(
                 () => _repo.AddBook(_booksInDataFiller.First())
-                );            
+                );
         }
 
         [TestMethod]
@@ -74,7 +114,7 @@ namespace LibrarianTests.Model
         }
 
         [TestMethod]
-        public void RemoveBook_BookInTheRepository_BookRemoved()
+        public void RemoveBook_BookInTheRepositoryWithNoDependencies_BookRemoved()
         {
             _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
 
@@ -99,9 +139,9 @@ namespace LibrarianTests.Model
             Assert.ThrowsException<DataNotRemovedException>(
                 () => _repo.DeleteBook(book.Isbn)
                 );
-           
+
         }
-        
+
         [TestMethod]
         public void GetBook_BookInTheRepository_BookReturned()
         {
@@ -135,11 +175,11 @@ namespace LibrarianTests.Model
 
             _repo.AddBookCopy(bookCopy);
 
-            Assert.AreEqual(bookCopy, _repo.GetBookCopy(0)); 
+            Assert.AreEqual(bookCopy, _repo.GetBookCopy(0));
         }
 
         [TestMethod]
-        public void AddBookCopy_BookInTheRepositoryAlreadyExists_ExceptionThrown() 
+        public void AddBookCopy_BookInTheRepositoryAlreadyExists_ExceptionThrown()
         {
             _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
 
@@ -170,31 +210,146 @@ namespace LibrarianTests.Model
             _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
 
             Assert.ThrowsException<DataNotExistsException>(
-                () => _repo.GetBookCopy(1)              
+                () => _repo.GetBookCopy(1)
                 );
         }
 
         [TestMethod]
-        public void DeleteBookCopy_BookCopyInTheRepository_BookCopyRemoved()
+        public void DeleteBookCopy_BookCopyInTheRepositoryWithNoDependencies_BookCopyRemoved()
         {
-            var bookCopy = new BookCopy(_booksInDataFiller[0], BookCopy.States.Good, 100);
-            _bookCopiesInDataFiller = new List<BookCopy>()
-            {
-                bookCopy
-            };
-            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller, bookCopies: _bookCopiesInDataFiller));
 
-           
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                           bookCopies: _bookCopiesInDataFiller));
+
+            _repo.DeleteBookCopy(_bookCopiesInDataFiller[0]);
+            _bookCopiesInDataFiller.RemoveAt(0);
+
             CollectionAssert.AreEqual(
                 _bookCopiesInDataFiller,
                 (System.Collections.ICollection)_repo.GetAllBookCopies()
                 );
         }
 
-        [TestMethod] 
+        [TestMethod]
         public void DeleteBook_BookHaveDepentedEvents_ExceptionThrown()
         {
-            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller, customers: _customersInDataFiller));
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                           customers: _customersInDataFiller,
+                                                           bookCopies: _bookCopiesInDataFiller,
+                                                           events: _eventsInDataFiller));
+
+            Assert.ThrowsException<UnsafeDataRemoveException>(
+                () => _repo.DeleteBook(_booksInDataFiller[0].Isbn)
+                );
+        }
+
+        [TestMethod]
+        public void DeleteBookCopy_BookCopyHaveDepentedEvents_ExceptionThrown()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                           customers: _customersInDataFiller,
+                                                           bookCopies: _bookCopiesInDataFiller,
+                                                           events: _eventsInDataFiller));
+
+            Assert.ThrowsException<UnsafeDataRemoveException>(
+                () => _repo.DeleteBookCopy(_bookCopiesInDataFiller[0])
+                );
+        }
+
+        [TestMethod]
+        public void DeleteBook_BookHaveDepentedEventsForceDeletion_AllDependendEventsAreRemoved()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                           customers: _customersInDataFiller,
+                                                           bookCopies: _bookCopiesInDataFiller,
+                                                           events: _eventsInDataFiller));
+
+            _repo.DeleteBook(_booksInDataFiller[0].Isbn, true);
+
+            var actual = _repo.GetAllEvents().Count();
+            Assert.AreEqual(0, actual);
+
+        }
+
+        public void DeleteBookCopy_BookCopyHaveDepentedEventsForceDeletion_AllDependendEventsAreRemoved()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                           customers: _customersInDataFiller,
+                                                           bookCopies: _bookCopiesInDataFiller,
+                                                           events: _eventsInDataFiller));
+
+            _repo.DeleteBookCopy(_bookCopiesInDataFiller[0], true);
+            var actual = _repo.GetAllEvents().Count();
+            Assert.AreEqual(0, actual);
+        }
+
+        [TestMethod]
+        public void DeleteCustomer_CustomerWithUnreturnedBook_DeletionCannotBeForced()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                           customers: _customersInDataFiller,
+                                                           bookCopies: _bookCopiesInDataFiller,
+                                                           events: _eventsInDataFiller));
+
+            Assert.ThrowsException<CustomerHasArreasException>(
+            () => _repo.DeleteCustomer(_customersInDataFiller[0], true)
+            );
+
+        }
+        [TestMethod]
+        public void DeleteCustomer_CustomerWithoutArreasForceDeletion_AllDependendEventsAreRemoved()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                           customers: _customersInDataFiller,
+                                                           bookCopies: _bookCopiesInDataFiller,
+                                                           events: _eventsInDataFiller));
+
+            _bookCopiesInDataFiller[0].IsLent = true;
+
+            _repo.AddEvent(new ReturnBookEvent(_bookCopiesInDataFiller[0],
+                                               _customersInDataFiller[0],
+                                               DateTime.ParseExact("27/02/2020", "dd/mm/yyyy", null)));
+
+            _repo.DeleteCustomer(_customersInDataFiller[0], true);
+
+        }
+
+        [TestMethod]
+        public void ReturnBookEvent_BookIsNotLent_ExceptionThrown()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                           customers: _customersInDataFiller,
+                                                           bookCopies: _bookCopiesInDataFiller,
+                                                           events: _eventsInDataFiller));
+
+            var eve = new ReturnBookEvent(_bookCopiesInDataFiller[0],
+                                          _customersInDataFiller[0],
+                                          DateTime.ParseExact("22/03/2018", "dd/mm/yyyy", null));
+
+            Assert.ThrowsException<InvalidEventException>(
+                () => _repo.AddEvent(eve)
+                );
+        }
+
+        [TestMethod]
+        public void DeleteCustomer_CustomerHasUnpaidFees_ExceptionThrown()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                           customers: _customersInDataFiller,
+                                                           bookCopies: _bookCopiesInDataFiller,
+                                                           events: _eventsInDataFiller));
+            _bookCopiesInDataFiller[0].IsLent = true; 
+
+            _repo.AddEvent(new ReturnBookEvent(_bookCopiesInDataFiller[0],
+                                               _customersInDataFiller[0],
+                                               DateTime.ParseExact("22/04/2018", "dd/mm/yyyy", null),
+                                               3,
+                                               PaymentCause.Postponed));
+            
+            Assert.ThrowsException<CustomerHasArreasException>(
+                () => _repo.DeleteCustomer(_customersInDataFiller[0], true)
+                );
+
         }
     }
 }

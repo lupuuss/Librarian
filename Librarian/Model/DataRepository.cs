@@ -199,7 +199,7 @@ namespace Librarian.Model
                 .Count();
             var returnsCount = dependencies
                 .Where(e => e is ReturnBookEvent)
-                .Cast<LendBookEvent>()
+                .Cast<ReturnBookEvent>()
                 .Count();
 
             if (lendsCount - returnsCount != 0)
