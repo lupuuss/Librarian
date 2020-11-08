@@ -9,7 +9,7 @@ namespace Librarian.Model.Data
         public Isbn(string isbn)
         {
 
-            var regex = new Regex(@".*"); // TODO: Isbn Regex 
+            var regex = new Regex(@"\d{3}-\d-\d{2}-\d{6}-\d");
 
             if (!regex.Match(isbn).Success)
             {
