@@ -62,9 +62,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Model\Filler\ConstDataFillerTest.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Logic\DataServiceTest.cs" />
-	<Compile Include="Model\DataRepositoryTest.cs" />
+    <Compile Include="Model\DataRepositoryTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
