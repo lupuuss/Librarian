@@ -35,7 +35,8 @@ namespace LibrarianTests.Logic
             {
                 new Customer("Janusz", "Kowalski", new Address("", "", "", "")),
                 new Customer("Janusz", "Nowak", new Address("", "", "", "")),
-                new Customer("Andrzej", "Nowak", new Address("", "", "", ""))
+                new Customer("Andrzej", "Nowak", new Address("", "", "", "")),
+                new Customer("Paweł", "Skakacz", new Address("", "", "", ""))
             };
 
             _books = new List<Book>()
@@ -43,7 +44,8 @@ namespace LibrarianTests.Logic
                 new Book(new Isbn("978-3-16-148410-0"), "1", "1"),
                 new Book(new Isbn("978-3-16-148427-0"), "2", "2"),
                 new Book(new Isbn("978-3-16-148422-0"), "3", "3"),
-                new Book(new Isbn("978-3-16-148498-0"), "4", "4")
+                new Book(new Isbn("978-3-16-148498-0"), "4", "4"),
+                new Book(new Isbn("978-3-16-148498-0"), "5", "5")
             };
 
             _bookCopies = new List<BookCopy>()
@@ -52,7 +54,8 @@ namespace LibrarianTests.Logic
                 new BookCopy(_books[0], BookCopy.States.Good, 11.0),
                 new BookCopy(_books[1], BookCopy.States.Good, 12.0),
                 new BookCopy(_books[2], BookCopy.States.Used, 13.0),
-                new BookCopy(_books[3], BookCopy.States.Good, 14.0)
+                new BookCopy(_books[3], BookCopy.States.Good, 14.0),
+                new BookCopy(_books[4], BookCopy.States.Good, 14.0)
             };
 
             _events = new List<Event>()
@@ -61,7 +64,10 @@ namespace LibrarianTests.Logic
                 new LendBookEvent(_bookCopies[2], _customers[1], DateTime.Parse("4/3/2020 9:00:00")),
                 new LendBookEvent(_bookCopies[3], _customers[2], DateTime.Parse("5/3/2020 9:00:00")),
                 new LendBookEvent(_bookCopies[1], _customers[2], DateTime.Parse("9/3/2020 9:00:00")),
-                new LendBookEvent(_bookCopies[4], _customers[2], DateTime.Parse("17/3/2020 9:00:00"))
+                new LendBookEvent(_bookCopies[4], _customers[2], DateTime.Parse("17/3/2020 9:00:00")),
+                new LendBookEvent(_bookCopies[5], _customers[3], DateTime.Parse("18/3/2020 9:00:00")),
+                new ReturnBookEvent(_bookCopies[5], _customers[3], DateTime.Parse("19/3/2020 9:00:00"), 100, PaymentCause.DamagedBook),
+                new PaymentEvent(DateTime.Parse("20/3/2020 9:00:00"), _customers[3], 110)
             };
 
             _bookCopies[0].IsLent = true;
@@ -383,7 +389,7 @@ namespace LibrarianTests.Logic
             var actual = _dataService.GetEvents(fromDate: DateTime.Parse("7/3/2020 9:00:00")).ToList();
 
             CollectionAssert.AreEqual(
-                new List<Event> { _events[4], _events[3] },
+                new List<Event> { _events[7], _events[6], _events[5], _events[4], _events[3] },
                 actual
                 );
         }
@@ -559,6 +565,74 @@ namespace LibrarianTests.Logic
                 repo => repo.AddBookCopy(Match.Create<BookCopy>(validator)),
                 Times.Once()
                 );
+        }
+
+        [TestMethod]
+        public void AddPayment_ExceptionOccurs_ThrowsException()
+        {
+
+            _repoMock
+                .Setup(repo => repo.AddEvent(It.IsAny<Event>()))
+                .Throws(new EventException("Event test exception!"));
+
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var exception = Assert.ThrowsException<DataServiceException>(
+                () => _dataService.AddPayment(_customers.First(), 100.0)
+                );
+
+            Assert.IsInstanceOfType(exception.InnerException, typeof(EventException));
+
+
+            exception = Assert.ThrowsException<DataServiceException>(
+                () => _dataService.AddPayment(_customers.First(), -100.0)
+                );
+
+            Assert.IsInstanceOfType(exception.InnerException, typeof(ArgumentException));
+        }
+
+        [TestMethod]
+        public void AddPayment_RepositoryAcceptsInput_AddPayment()
+        {
+
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            _dataService.AddPayment(_customers.First(), 100.0);
+
+            Predicate<PaymentEvent> validator = e =>
+                e.Date == _providedDate &&
+                e.Amount == 100.0 &&
+                e.Customer == _customers.First();
+
+            _repoMock.Verify(
+                repo => repo.AddEvent(Match.Create<PaymentEvent>(validator)),
+                Times.Once()
+                );
+        }
+
+        [TestMethod]
+        public void CheckBalance_NonZeroAmounts_ReturnsProperBalance()
+        {
+
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            var actual = _dataService.CheckBalance(_customers[3]);
+
+            Assert.AreEqual(10, actual);
+        }
+
+        [TestMethod]
+        public void CheckBalance_ZeroAmounts_ReturnsZeroBalance()
+        {
+
+            _dataService = new DataService(_repoMock.Object, _dateProviderMock.Object);
+
+            foreach (Customer customer in _customers.GetRange(0, 3))
+            {
+                var actual = _dataService.CheckBalance(customer);
+
+                Assert.AreEqual(0, actual);
+            }
         }
     }
 }

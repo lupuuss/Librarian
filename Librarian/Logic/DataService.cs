@@ -214,5 +214,39 @@ namespace Librarian.Logic
             }
 
         }
+
+        public void AddPayment(Customer customer, double amount)
+        {
+            try
+            {
+                var payment = new PaymentEvent(_dateProvider.Now(), customer, amount);
+
+                _dataRepository.AddEvent(payment);
+
+            } catch (Exception e)
+            {
+                throw new DataServiceException(e);
+            }
+        }
+
+        public double CheckBalance(Customer customer)
+        {
+
+            var deptCount = _dataRepository
+                .GetAllEvents()
+                .Where(e => e is ReturnBookEvent)
+                .Cast<ReturnBookEvent>()
+                .Where(e => e.Customer == customer)
+                .Sum(e => e.RequiredPayment);
+
+            var paidCount = _dataRepository
+                .GetAllEvents()
+                .Where(e => e is PaymentEvent)
+                .Cast<PaymentEvent>()
+                .Where(e => e.Customer == customer)
+                .Sum(e => e.Amount);
+
+            return paidCount - deptCount;
+        }
     }
 }

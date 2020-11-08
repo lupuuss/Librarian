@@ -62,6 +62,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Model\Data\DataTests.cs" />
     <Compile Include="Model\Filler\ConstDataFillerTest.cs" />
     <Compile Include="Model\Filler\RandomDataFillerTest.cs" />
     <Compile Include="Utils.cs" />
