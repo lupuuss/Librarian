@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Librarian
 {
@@ -8,7 +9,7 @@ namespace Librarian
     {
         public static void RemoveAll<T>(this ICollection<T> list, IEnumerable<T> toRemove)
         {
-            foreach (var element in toRemove)
+            foreach (var element in toRemove.ToList())
             {
                 list.Remove(element);
             }

@@ -55,7 +55,7 @@ namespace Librarian.Model
                     );
             }
 
-            foreach (var dependency in bookCopyDependencies)
+            foreach (var dependency in bookCopyDependencies.ToList())
             {
                 DeleteBookCopy(dependency, true);
             }
