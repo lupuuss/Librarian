@@ -28,7 +28,7 @@ namespace Librarian.Model.Data.Exceptions
         public UnsafeDataRemoveException(
             string referenceDetails
             ) : base("Unsafe delete! Use removeDependencies param" +
-                "to enable cascade removal! Dependencies found: " + referenceDetails) { }
+                " to enable cascade removal! Dependencies found: " + referenceDetails) { }
     }
 
     public class CustomerHasArreasException : DataException
