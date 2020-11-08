@@ -45,50 +45,6 @@ namespace LibrarianTests.Model.Data
             new Isbn("111-3-16-148410-2");
             new Isbn("222-0-36-140000-1");
         }
-    
-        [TestMethod]
-        public void PaymentEventConstructor_NegativeOrZeroAmount_ThrowsException()
-        {
-            Assert.ThrowsException<ArgumentException>(
-                () => new PaymentEvent(DateTime.Now, null, new Random().Next(1, 100000) * -1)
-                );
-
-            Assert.ThrowsException<ArgumentException>(
-                () => new PaymentEvent(DateTime.Now, null, 0)
-                );
-        }
-
-        [TestMethod]
-        public void PaymentEventConstructor_PositiveAmount_SuccesfulCreation()
-        {
-            new PaymentEvent(DateTime.Now, null, new Random().Next(1, 100000));
-        }
-
-        [TestMethod]
-        public void ReturnBookEvent_NegativeAmount_ThrowsException()
-        {
-            Assert.ThrowsException<ArgumentException>(
-                () => new ReturnBookEvent(null, null, DateTime.Now, new Random().Next(1, 100000) * -1, PaymentCause.Postponed)
-                );
-        }
-
-        [TestMethod]
-        public void ReturnBookEvent_NotNoneCauseAndZeroAmount_ThrowsException()
-        {
-            Assert.ThrowsException<ArgumentException>(
-                () => new ReturnBookEvent(null, null, DateTime.Now, new Random().Next(1, 100000), PaymentCause.None)
-                );
-        }
-
-        [TestMethod]
-        public void ReturnBookEvent_ProperArguments_SuccessfulCreation()
-        {
-            new ReturnBookEvent(null, null, DateTime.Now);
-
-            new ReturnBookEvent(null, null, DateTime.Now, 10.0, PaymentCause.Postponed);
-
-            new ReturnBookEvent(null, null, DateTime.Now, 20.0, PaymentCause.DamagedBook);
-        }
 
     }
 }

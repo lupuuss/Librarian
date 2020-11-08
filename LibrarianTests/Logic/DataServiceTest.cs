@@ -278,7 +278,7 @@ namespace LibrarianTests.Logic
                 e.Date == _providedDate &&
                 Utils.AreEqual(
                     e.RequiredPayment,
-                    _bookCopies[0].BasePrice * _dataService.paymentsModifiers[_bookCopies[0].State] / 100.0,
+                    _bookCopies[0].BasePrice * _dataService.PaymentsModifiers[_bookCopies[0].State] / 100.0,
                     0.001
                     );
 
@@ -300,7 +300,7 @@ namespace LibrarianTests.Logic
                 e.Date == _providedDate &&
                 Utils.AreEqual(
                     e.RequiredPayment,
-                    _bookCopies[3].BasePrice * _dataService.paymentsModifiers[_bookCopies[3].State] / 100.0,
+                    _bookCopies[3].BasePrice * _dataService.PaymentsModifiers[_bookCopies[3].State] / 100.0,
                     0.001
                     );
 
@@ -322,7 +322,7 @@ namespace LibrarianTests.Logic
                 e.Date == _providedDate &&
                 Utils.AreEqual(
                     e.RequiredPayment, 
-                    _bookCopies[2].BasePrice * _dataService.paymentsModifiers[_bookCopies[2].State] / 100.0,
+                    _bookCopies[2].BasePrice * _dataService.PaymentsModifiers[_bookCopies[2].State] / 100.0,
                     0.001
                     );
 
@@ -592,13 +592,6 @@ namespace LibrarianTests.Logic
                 );
 
             Assert.IsInstanceOfType(exception.InnerException, typeof(EventException));
-
-
-            exception = Assert.ThrowsException<DataServiceException>(
-                () => _dataService.AddPayment(_customers.First(), -100.0)
-                );
-
-            Assert.IsInstanceOfType(exception.InnerException, typeof(ArgumentException));
         }
 
         [TestMethod]

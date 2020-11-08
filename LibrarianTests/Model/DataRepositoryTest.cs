@@ -44,7 +44,9 @@ namespace LibrarianTests.Model
             _bookCopiesInDataFiller = new List<BookCopy>()
             {
                 new BookCopy(_booksInDataFiller[0], BookCopy.States.Good, 100),
-                new BookCopy(_booksInDataFiller[3], BookCopy.States.Good, 50)
+                new BookCopy(_booksInDataFiller[3], BookCopy.States.Good, 50),
+                new BookCopy(_booksInDataFiller[2], BookCopy.States.Damaged, 33),
+                new BookCopy(_booksInDataFiller[2], BookCopy.States.NeedReplacement, 33)
             };
 
             _eventsInDataFiller = new List<Event>()
@@ -116,7 +118,7 @@ namespace LibrarianTests.Model
         }
 
         [TestMethod]
-        public void RemoveBook_BookInTheRepositoryWithNoDependencies_BookRemoved()
+        public void DeleteBook_BookInTheRepositoryWithNoDependencies_BookRemoved()
         {
             _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
 
@@ -132,7 +134,7 @@ namespace LibrarianTests.Model
         }
 
         [TestMethod]
-        public void RemoveBook_BookNotInTheRepository_ExceptionThrown()
+        public void DeleteBook_BookNotInTheRepository_ExceptionThrown()
         {
             _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller));
 
@@ -275,8 +277,16 @@ namespace LibrarianTests.Model
             var actual = _repo.GetAllEvents().Count();
             Assert.AreEqual(0, actual);
 
-        }
+            actual = _repo.GetAllBookCopies().Where(c => c.Book == _booksInDataFiller[0]).Count();
+           
+            Assert.AreEqual(0, actual);
 
+            actual = _repo.GetAllBooks().Where(b => b == _booksInDataFiller[0]).Count();
+
+            Assert.AreEqual(0, actual);
+
+        }
+        [TestMethod]
         public void DeleteBookCopy_BookCopyHaveDepentedEventsForceDeletion_AllDependendEventsAreRemoved()
         {
             _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
@@ -323,24 +333,7 @@ namespace LibrarianTests.Model
 
         }
 
-        [TestMethod]
-        public void ReturnBookEvent_BookIsNotLent_ExceptionThrown()
-        {
-            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
-                                                           customers: _customersInDataFiller,
-                                                           bookCopies: _bookCopiesInDataFiller,
-                                                           events: _eventsInDataFiller));
-
-            var eve = new ReturnBookEvent(_bookCopiesInDataFiller[0],
-                                          _customersInDataFiller[0],
-                                          DateTime.ParseExact("22/03/2018", "dd/MM/yyyy", null));
-
-            Assert.ThrowsException<InvalidEventException>(
-                () => _repo.AddEvent(eve)
-                );
-        }
-
-        [TestMethod]
+        [TestMethod]   
         public void DeleteCustomer_CustomerHasUnpaidFees_ExceptionThrown()
         {
             _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
@@ -360,5 +353,203 @@ namespace LibrarianTests.Model
                 );
 
         }
+        [TestMethod]
+        public void AddEvent_CustomerDoesNotExist_ExceptionThrown()
+        {
+            _repo = new DataRepository(new ConstDataFiller());
+
+            var customer = new Customer("Jan", "Nowak", null);
+            Assert.ThrowsException<InvalidEventException>( 
+                () => _repo.AddEvent(new LendBookEvent(_bookCopiesInDataFiller[0], customer, DateTime.Now))
+            ); 
+        }
+
+        [TestMethod]
+        public void AddEvent_BookCopyDoesNotExist_ExceptionThrown()
+        {
+            _repo = new DataRepository(new ConstDataFiller(
+                                        customers: _customersInDataFiller));
+
+            var bookCopy = new BookCopy(_booksInDataFiller[0], BookCopy.States.Good, 50);
+            Assert.ThrowsException<InvalidEventException>(
+                () => _repo.AddEvent(new LendBookEvent(bookCopy, _customersInDataFiller[0], DateTime.Now))
+            );
+        }
+
+        [TestMethod]
+        public void AddEvent_LendingBookNotLent_AddsEventAndChangesBookIsLentToTrue()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                          customers: _customersInDataFiller,
+                                                          bookCopies: _bookCopiesInDataFiller,
+                                                          events: _eventsInDataFiller));
+
+            var bookCopy = new BookCopy(_booksInDataFiller[3], BookCopy.States.Good, 20);
+            _repo.AddBookCopy(bookCopy); 
+
+            var eve = new LendBookEvent(bookCopy, _customersInDataFiller[1], DateTime.ParseExact("01/02/2020", "dd/MM/yyyy", null));
+
+            _repo.AddEvent(eve);
+            var actual = _repo.GetAllEvents().Contains(eve);
+            Assert.AreEqual(true, actual);
+            Assert.AreEqual(true, eve.Copy.IsLent);
+        }
+
+        [TestMethod]
+        public void AddEvent_LendingBookInBadState_ExceptionThrown()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                          customers: _customersInDataFiller,
+                                                          bookCopies: _bookCopiesInDataFiller,
+                                                          events: _eventsInDataFiller));
+
+            Assert.ThrowsException<InvalidEventException>(
+                () => _repo.AddEvent(new LendBookEvent(_bookCopiesInDataFiller[2],
+                                                       _customersInDataFiller[1],
+                                                       DateTime.ParseExact("01/02/2020", "dd/MM/yyyy", null)))
+                );
+
+            Assert.ThrowsException<InvalidEventException>(
+                () => _repo.AddEvent(new LendBookEvent(_bookCopiesInDataFiller[3],
+                                                       _customersInDataFiller[1],
+                                                       DateTime.ParseExact("01/02/2020", "dd/MM/yyyy", null)))
+                );
+
+        }
+        [TestMethod]
+        public void AddEvent_ReturningBookIsNotLent_ExceptionThrown()
+        {
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                           customers: _customersInDataFiller,
+                                                           bookCopies: _bookCopiesInDataFiller,
+                                                           events: _eventsInDataFiller));
+
+            var eve = new ReturnBookEvent(_bookCopiesInDataFiller[0],
+                                          _customersInDataFiller[0],
+                                          DateTime.ParseExact("22/03/2018", "dd/MM/yyyy", null));
+
+            Assert.ThrowsException<InvalidEventException>(
+                () => _repo.AddEvent(eve)
+                );
+        }
+
+        [TestMethod]
+        public void AddEvent_ReturningBookBookIsLent_AddsReturnBookEventAndChangesBookIsLentToFalse()
+        {
+            _bookCopiesInDataFiller[0].IsLent = true; 
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                          customers: _customersInDataFiller,
+                                                          bookCopies: _bookCopiesInDataFiller,
+                                                          events: _eventsInDataFiller));
+            var eve = new ReturnBookEvent(_bookCopiesInDataFiller[0], _customersInDataFiller[0], DateTime.Now);
+            _repo.AddEvent(eve);
+
+            Assert.AreEqual(false, _bookCopiesInDataFiller[0].IsLent);
+            Assert.AreEqual(true, _repo.GetAllEvents().Contains(eve));
+        }
+
+        [TestMethod]
+        public void AddEvent_ReturningDamagedBookBookIsLent_ChangesBookStateToDamaged()
+        {
+            _bookCopiesInDataFiller[0].IsLent = true;
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                          customers: _customersInDataFiller,
+                                                          bookCopies: _bookCopiesInDataFiller,
+                                                          events: _eventsInDataFiller));
+
+            var eve = new ReturnBookEvent(_bookCopiesInDataFiller[0], _customersInDataFiller[0], DateTime.Now, 20, PaymentCause.DamagedBook);
+            _repo.AddEvent(eve);
+
+            var actual = _bookCopiesInDataFiller[0].State;
+            Assert.AreEqual(BookCopy.States.Damaged, actual);  
+        }
+
+        [TestMethod]
+        public void AddEvent_ReturningDamagedBookWithNegativePayment_ExceptionThrown()
+        {
+            _bookCopiesInDataFiller[0].IsLent = true;
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                          customers: _customersInDataFiller,
+                                                          bookCopies: _bookCopiesInDataFiller,
+                                                          events: _eventsInDataFiller));
+
+            var eve = new ReturnBookEvent(_bookCopiesInDataFiller[0],
+                                          _customersInDataFiller[0],
+                                          DateTime.Now,
+                                          -20,
+                                          PaymentCause.DamagedBook);
+   
+
+            Assert.ThrowsException<InvalidEventException>(
+                () => _repo.AddEvent(eve)
+                );
+
+        }
+
+        [TestMethod]
+        public void AddEvent_ReturningBookWithPositivePaymentAndNoCause_ExceptionThrown()
+        {
+            _bookCopiesInDataFiller[0].IsLent = true;
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                          customers: _customersInDataFiller,
+                                                          bookCopies: _bookCopiesInDataFiller,
+                                                          events: _eventsInDataFiller));
+
+            var eve = new ReturnBookEvent(_bookCopiesInDataFiller[0],
+                                          _customersInDataFiller[0],
+                                          DateTime.Now,
+                                          20,
+                                          PaymentCause.None);
+
+
+            Assert.ThrowsException<InvalidEventException>(
+                () => _repo.AddEvent(eve)
+                );
+
+        }
+
+        [TestMethod]
+        public void AddEvent_PaymentEventWithZeroOrNegativeAmout_ExceptionThrown()
+        {
+            _bookCopiesInDataFiller[0].IsLent = true;
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                          customers: _customersInDataFiller,
+                                                          bookCopies: _bookCopiesInDataFiller,
+                                                          events: _eventsInDataFiller));
+
+            var eve = new PaymentEvent(DateTime.Now, _customersInDataFiller[0], 0);
+
+            Assert.ThrowsException<InvalidEventException>(
+                () => _repo.AddEvent(eve)
+                );
+
+            eve = new PaymentEvent(DateTime.Now, _customersInDataFiller[0], -15);
+
+            Assert.ThrowsException<InvalidEventException>(
+                () => _repo.AddEvent(eve)
+                );
+
+        }
+
+        [TestMethod]
+        public void AddEvent_PaymentEventWithPositiveAmout_AddedToEvents()
+        {
+            _bookCopiesInDataFiller[0].IsLent = true;
+            _repo = new DataRepository(new ConstDataFiller(books: _booksInDataFiller,
+                                                          customers: _customersInDataFiller,
+                                                          bookCopies: _bookCopiesInDataFiller,
+                                                          events: _eventsInDataFiller));
+
+            var eve = new PaymentEvent(DateTime.Now, _customersInDataFiller[0], 15);
+
+            _repo.AddEvent(eve);
+
+            var actual = _repo.GetAllEvents().Contains(eve);
+            Assert.AreEqual(true, actual);
+             
+
+
+        }
+
     }
 }
