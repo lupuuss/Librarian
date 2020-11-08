@@ -10,6 +10,14 @@ using System.Xml.Schema;
 
 namespace Librarian.Logic
 {
+
+    public class DataServiceException : Exception
+    {
+        public DataServiceException(
+            Exception cause
+            ) : base("DataService task failed! Cause: " + cause.GetType().Name, cause) { }
+    }
+
     public class DataService : IDataService
     {
         private readonly IDataRepository _dataRepository;
@@ -21,7 +29,7 @@ namespace Librarian.Logic
         public double PostponedPricePerDay
         { get; set; } = 0.5;
 
-        DataService(IDataRepository dataRepository, IDateProvider dateProvider)
+        public DataService(IDataRepository dataRepository, IDateProvider dateProvider)
         {
             _dataRepository = dataRepository;
             _dateProvider = dateProvider;
